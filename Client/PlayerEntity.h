@@ -1,10 +1,11 @@
 #pragma once
 
 #include <SFML/Graphics.hpp>
-class PlayerEntity {
-	sf::RectangleShape shape;
+class PlayerEntity : public sf::Transformable, public sf::Drawable {
+	sf::RectangleShape gun;
+	sf::CircleShape body;
 public:
 	PlayerEntity();
-	void Draw(sf::RenderWindow& window);
-	void Update(sf::RenderWindow& window);
+	void draw(sf::RenderTarget& target, sf::RenderStates states) const;
+	void Update(float deltaTime, sf::RenderWindow& window);
 };
