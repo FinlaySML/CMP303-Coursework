@@ -24,6 +24,9 @@
     <ClInclude Include="TickClock.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ConnectedSocket.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="PacketFactory.cpp">
@@ -33,6 +36,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="TickClock.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ConnectedSocket.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

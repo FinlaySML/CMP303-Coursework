@@ -49,3 +49,15 @@ PlayerEntity::InputData PacketFactory::PlayerInput(sf::Packet& packet) {
     packet >> data.w >> data.a >> data.s >> data.d >> data.rotation;
     return data;
 }
+
+sf::Packet PacketFactory::Message(const std::string& message) {
+    sf::Packet packet;
+    packet << static_cast<std::uint8_t>(PacketType::MESSAGE) << message;
+    return packet;
+}
+
+std::string PacketFactory::Message(sf::Packet& packet) {
+    std::string message;
+    packet >> message;
+    return message;
+}

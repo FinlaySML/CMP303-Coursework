@@ -10,6 +10,7 @@ class TickClock {
 public:
 	TickClock(float ticksPerSecond);
 	float GetTickDelta();
+	int GetTick();
 	bool ExecuteTick(std::function<void(void)> tickFunction);
 };
 

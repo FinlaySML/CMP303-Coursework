@@ -9,7 +9,8 @@ public:
 	enum class PacketType : std::uint8_t {
 		JOIN_GAME,
 		PLAYER_UPDATE,
-		PLAYER_INPUT
+		PLAYER_INPUT,
+		MESSAGE
 	};
 	static PacketType GetType(sf::Packet& packet);
 	// Join Game
@@ -31,4 +32,7 @@ public:
 	// Send Player Input
 	static sf::Packet PlayerInput(PlayerEntity::InputData inputData);
 	static PlayerEntity::InputData PlayerInput(sf::Packet& packet);
+	// Messaging
+	static sf::Packet Message(const std::string& message);
+	static std::string Message(sf::Packet& packet);
 };

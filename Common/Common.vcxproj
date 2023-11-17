@@ -133,11 +133,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="ConnectedSocket.h" />
     <ClInclude Include="PacketFactory.h" />
     <ClInclude Include="PlayerEntity.h" />
     <ClInclude Include="TickClock.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="ConnectedSocket.cpp" />
     <ClCompile Include="PacketFactory.cpp" />
     <ClCompile Include="PlayerEntity.cpp" />
     <ClCompile Include="TickClock.cpp" />

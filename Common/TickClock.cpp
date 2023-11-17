@@ -7,6 +7,10 @@ float TickClock::GetTickDelta() {
 	return tickDelta;
 }
 
+int TickClock::GetTick() {
+	return tick;
+}
+
 bool TickClock::ExecuteTick(std::function<void(void)> tickFunction) {
 	bool executed{false};
 	totalTime += clock.restart().asSeconds();
