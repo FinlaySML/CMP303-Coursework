@@ -1,8 +1,9 @@
 #include "InGame.h"
 #include <iostream>
+#include "ConnectToServer.h"
 
 InGame::InGame(std::unique_ptr<sf::TcpSocket>&& server, PacketFactory::JoinGameData data) : 
-server{ std::move(server) }, 
+server{ std::move(server) },
 tickClock{ 60 }, 
 localPlayer{ data.playerEntityId, data.position, data.rotation, true } {}
 
@@ -12,7 +13,7 @@ void InGame::Update(sf::RenderWindow& window) {
     //Tick
     tickClock.ExecuteTick([&]() {
         //Receive Packets
-        for (sf::Packet packet; server->receive(packet) == sf::TcpSocket::Done; packet.clear()) {
+        server.ProcessPackets([&](sf::Packet& packet) {
             PacketFactory::PacketType type{ PacketFactory::GetType(packet) };
             if (type == PacketFactory::PacketType::PLAYER_UPDATE) {
                 auto updateData = PacketFactory::PlayerUpdate(packet);
@@ -32,13 +33,14 @@ void InGame::Update(sf::RenderWindow& window) {
                 std::string message = PacketFactory::Message(packet);
                 std::cout << message << std::endl;
             }
-        }
+        
+        });
         //Local Player Update
         if (window.hasFocus()) {
             PlayerEntity::InputData inputData{ localPlayer.GetInputData(window) };
             localPlayer.Update(tickClock.GetTickDelta(), inputData);
             sf::Packet packet{ PacketFactory::PlayerInput(inputData) };
-            server->send(packet);
+            server.Send(packet);
         }
     });
 }
@@ -55,6 +57,9 @@ void InGame::Render(sf::RenderWindow& window) {
 }
 
 std::optional<std::unique_ptr<ClientState>> InGame::ChangeState() {
+    if(!server.IsConnected()) {
+        return std::make_unique<ConnectToServer>();
+    }
     return {};
 }
 

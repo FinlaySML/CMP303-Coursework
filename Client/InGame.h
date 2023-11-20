@@ -4,9 +4,10 @@
 #include "TickClock.h"
 #include "ClientPlayerEntity.h"
 #include "PacketFactory.h"
+#include "ConnectedSocket.h"
 
 class InGame : public ClientState {
-    std::unique_ptr<sf::TcpSocket> server;
+    ConnectedSocket server;
     TickClock tickClock;
     std::unordered_map<std::uint16_t, ClientPlayerEntity> otherPlayers;
     ClientPlayerEntity localPlayer;

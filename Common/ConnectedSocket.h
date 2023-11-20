@@ -8,31 +8,16 @@
 #include <SFML/System/Clock.hpp>
 #include <iostream>
 
-struct ConnectedSocket {
+class ConnectedSocket {
     std::unique_ptr<sf::TcpSocket> socket;
     sf::Clock lastReceived;
     bool connected;
-    ConnectedSocket(sf::TcpListener& listener) : socket{std::make_unique<sf::TcpSocket>()}, connected{false} {
-        socket->setBlocking(false);
-        if (listener.accept(*socket) == sf::TcpListener::Done) {
-            connected = true;
-        }
-    }
-    void ProcessPackets(std::function<void(sf::Packet&)> func) {
-        for (sf::Packet packet; socket->receive(packet) == sf::TcpSocket::Done; packet.clear()) {
-            lastReceived.restart();
-            func(packet);
-        }
-    }
-    float TimeSinceLastPacket() const {
-        return lastReceived.getElapsedTime().asSeconds();
-    }
-    void Send(sf::Packet& packet) {
-        if(socket->send(packet) == sf::Socket::Disconnected) {
-            connected = false;
-        }
-    }
-    bool IsConnected() const {
-        return connected;
-    }
+public:
+    ConnectedSocket(sf::TcpListener& listener);
+    ConnectedSocket(std::unique_ptr<sf::TcpSocket>&& connectedSocket);
+    void ProcessPackets(std::function<void(sf::Packet&)> func);
+    float TimeSinceLastPacket() const;
+    void Send(sf::Packet& packet);
+    void Disconnect();
+    bool IsConnected() const;
 };

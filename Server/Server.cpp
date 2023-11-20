@@ -41,8 +41,10 @@ void CheckForNewClient(sf::TcpListener& listener) {
 void CheckForDisconnectedClients() {
     for (auto& [id, client] : clients) {
         if(!client.IsConnected()) {
-            ServerMessage(std::format("A player ({}) has disconnected from the game", id));
-            clients.erase(id);
+            auto idCopy = id;
+            players.erase(idCopy);
+            clients.erase(idCopy);
+            ServerMessage(std::format("A player ({}) has disconnected from the game", idCopy));
             break;
         }
     }
