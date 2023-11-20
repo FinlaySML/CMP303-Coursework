@@ -78,21 +78,19 @@ void InGame::Collision()
                 }
             }
         }
-        if (overlap > 0.0f) {
-            sf::FloatRect barrier{ sf::Vector2f(barriers[mostOverlap]), sf::Vector2f(1,1) };
-            sf::FloatRect body{ localPlayer.GetCollisionBox() };
-            std::array<float, 4> ejects = {
-                std::abs(barrier.left - body.width - body.left), //left
-                std::abs(barrier.left + barrier.width - body.left), //right
-                std::abs(barrier.top - body.height - body.top), //top
-                std::abs(barrier.top + barrier.height - body.top) //bottom
-            };
-            size_t index = std::distance(ejects.begin(), std::min_element(ejects.begin(), ejects.end()));
-            localPlayer.setPosition(localPlayer.getPosition() + directions[index] * ejects[index]);
-        }
-        else {
+        if (overlap == 0.0f) {
             break;
         }
+        sf::FloatRect barrier{ sf::Vector2f(barriers[mostOverlap]), sf::Vector2f(1,1) };
+        sf::FloatRect body{ localPlayer.GetCollisionBox() };
+        std::array<float, 4> ejects = {
+            std::abs(barrier.left - body.width - body.left), //left
+            std::abs(barrier.left + barrier.width - body.left), //right
+            std::abs(barrier.top - body.height - body.top), //top
+            std::abs(barrier.top + barrier.height - body.top) //bottom
+        };
+        size_t index = std::distance(ejects.begin(), std::min_element(ejects.begin(), ejects.end()));
+        localPlayer.setPosition(localPlayer.getPosition() + directions[index] * ejects[index]);
     }
 }
 
@@ -121,5 +119,5 @@ std::optional<std::unique_ptr<ClientState>> InGame::ChangeState() {
 }
 
 sf::Color InGame::GetClearColor() {
-    return sf::Color(165, 82, 82);
+    return sf::Color(0xc2a280ff);
 }
