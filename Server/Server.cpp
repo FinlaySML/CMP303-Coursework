@@ -16,6 +16,7 @@ std::uint16_t GetNewID(){
 
 std::unordered_map<std::uint16_t, ConnectedSocket> clients;
 std::unordered_map<std::uint16_t, PlayerEntity> players;
+std::vector<sf::Vector2i> barriers;
 
 void ServerMessage(const std::string& message) {
     sf::Packet joinMessage{ PacketFactory::Message(message) };
@@ -33,7 +34,7 @@ void CheckForNewClient(sf::TcpListener& listener) {
     std::uint16_t id{ GetNewID() };
     ConnectedSocket& client = clients.insert({ id, std::move(socket) }).first->second;
     PlayerEntity& newPlayer = players.insert({ id, PlayerEntity{id, {0.0f, 0.0f}, 0.0f} }).first->second;
-    sf::Packet packet{ PacketFactory::JoinGame(newPlayer.id, newPlayer.getPosition(), newPlayer.getRotation()) };
+    sf::Packet packet{ PacketFactory::JoinGame(newPlayer.id, newPlayer.getPosition(), newPlayer.getRotation(), barriers) };
     client.Send(packet);
     ServerMessage(std::format("A new player ({}) has joined the game", id));
 }
@@ -52,6 +53,13 @@ void CheckForDisconnectedClients() {
 
 void main()
 {
+    barriers.push_back({ 0, 0 });
+    barriers.push_back({ 1, 0 });
+    barriers.push_back({ 2, 0 });
+    barriers.push_back({ 3, 0 });
+    barriers.push_back({ 0, 1 });
+    barriers.push_back({ 0, 2 });
+    barriers.push_back({ 0, 3 });
     sf::TcpListener listener;
     listener.setBlocking(false);
     if (listener.listen(DEFAULT_PORT) == sf::Socket::Error) {

@@ -7,15 +7,9 @@
 InGame::InGame(std::unique_ptr<sf::TcpSocket>&& server, PacketFactory::JoinGameData data) : 
 server{ std::move(server) },
 tickClock{ 60 }, 
-localPlayer{ data.playerEntityId, data.position, data.rotation, true } {
+localPlayer{ data.playerEntityId, data.position, data.rotation, true },
+barriers{data.barriers} {
     brickTexture.loadFromFile("brick.png");
-    bricks.push_back({ 0, 0 });
-    bricks.push_back({1, 0});
-    bricks.push_back({ 2, 0 });
-    bricks.push_back({ 3, 0 });
-    bricks.push_back({ 0, 1 });
-    bricks.push_back({ 0, 2 });
-    bricks.push_back({ 0, 3 });
 }
 
 void InGame::Update(sf::RenderWindow& window) {
@@ -59,18 +53,18 @@ void InGame::Update(sf::RenderWindow& window) {
 
 std::array<sf::Vector2f, 4> directions = {
     sf::Vector2f(-1, 0),
-    sf::Vector2f(1, 0),
-    sf::Vector2f(0,-1),
-    sf::Vector2f(0, 1)
+    sf::Vector2f( 1, 0),
+    sf::Vector2f( 0,-1),
+    sf::Vector2f( 0, 1)
 };
 
 void InGame::Collision()
 {
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < 2; i++) {
         float overlap = 0.0f;
         size_t mostOverlap = 0;
-        for (size_t barrierIndex = 0; barrierIndex < bricks.size(); barrierIndex++) {
-            sf::FloatRect barrier{ sf::Vector2f(bricks[barrierIndex]), sf::Vector2f(1,1)};
+        for (size_t barrierIndex = 0; barrierIndex < barriers.size(); barrierIndex++) {
+            sf::FloatRect barrier{ sf::Vector2f(barriers[barrierIndex]), sf::Vector2f(1,1)};
             sf::FloatRect body{ localPlayer.GetCollisionBox()};
             if (barrier.intersects(body)) {
                 float top = std::max(barrier.top, body.top);
@@ -85,7 +79,7 @@ void InGame::Collision()
             }
         }
         if (overlap > 0.0f) {
-            sf::FloatRect barrier{ sf::Vector2f(bricks[mostOverlap]), sf::Vector2f(1,1) };
+            sf::FloatRect barrier{ sf::Vector2f(barriers[mostOverlap]), sf::Vector2f(1,1) };
             sf::FloatRect body{ localPlayer.GetCollisionBox() };
             std::array<float, 4> ejects = {
                 std::abs(barrier.left - body.width - body.left), //left
@@ -107,14 +101,14 @@ void InGame::Render(sf::RenderWindow& window) {
     brick.setScale(1.0f / 16.0f, 1.0f / 16.0f);
     //Render
     window.setView(sf::View{ sf::Vector2f{0, 0}, sf::Vector2f{16, 12} });
+    for (auto& pos : barriers) {
+        brick.setPosition(sf::Vector2f{ pos });
+        window.draw(brick);
+    }
     for (auto& [id, player] : otherPlayers) {
         window.draw(player);
     }
     window.draw(localPlayer);
-    for(auto& pos : bricks){
-        brick.setPosition(sf::Vector2f{ pos });
-        window.draw(brick);
-    }
     //UI
     window.setView(sf::View{ sf::Vector2f{window.getSize()} / 2.0f,sf::Vector2f{window.getSize()} });
 }

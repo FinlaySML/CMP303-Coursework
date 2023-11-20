@@ -18,7 +18,7 @@ sf::Packet PacketFactory::JoinGame(std::uint16_t entityId, sf::Vector2f position
 
 PacketFactory::JoinGameData PacketFactory::JoinGame(sf::Packet& packet) {
     JoinGameData data;
-    packet >> data.playerEntityId >> data.position.x >> data.position.y;
+    packet >> data.playerEntityId >> data.position.x >> data.position.y >> data.rotation;
     size_t size{};
     packet >> size;
     data.barriers.resize(size);

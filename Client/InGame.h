@@ -13,7 +13,7 @@ class InGame : public ClientState {
     std::unordered_map<std::uint16_t, ClientPlayerEntity> otherPlayers;
     ClientPlayerEntity localPlayer;
     sf::Texture brickTexture;
-    std::vector<sf::Vector2i> bricks;
+    std::vector<sf::Vector2i> barriers;
 public:
     InGame(std::unique_ptr<sf::TcpSocket>&& server, PacketFactory::JoinGameData data);
     void ProcessEvent(const sf::Event& event) override {}
