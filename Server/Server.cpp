@@ -6,6 +6,7 @@
 #include <iostream>
 #include <unordered_map>
 #include <format>
+#include "Server.h"
 
 std::uint16_t GetNewID(){
     static std::uint16_t usedEntityIds{0};
@@ -18,7 +19,9 @@ std::unordered_map<std::uint16_t, PlayerEntity> players;
 
 void ServerMessage(const std::string& message) {
     sf::Packet joinMessage{ PacketFactory::Message(message) };
-    ConnectedSocket::SendToAll(clients, joinMessage);
+    for (auto& [key, value] : clients) {
+        value.Send(joinMessage);
+    }
     std::cout << message << std::endl;
 }
 
@@ -35,6 +38,16 @@ void CheckForNewClient(sf::TcpListener& listener) {
     ServerMessage(std::format("A new player ({}) has joined the game", id));
 }
 
+void CheckForDisconnectedClients() {
+    for (auto& [id, client] : clients) {
+        if(!client.IsConnected()) {
+            ServerMessage(std::format("A player ({}) has disconnected from the game", id));
+            clients.erase(id);
+            break;
+        }
+    }
+}
+
 void main()
 {
     sf::TcpListener listener;
@@ -47,6 +60,7 @@ void main()
     while(true) {
         bool executedTick = tickClock.ExecuteTick([&]() {
             // Recieve Packets
+            CheckForDisconnectedClients();
             CheckForNewClient(listener);
             for (auto& [id, client] : clients) {
                 client.ProcessPackets([&] (sf::Packet& packet) {
@@ -63,7 +77,9 @@ void main()
                 updateData.push_back({ player.id, player.getPosition(), player.getRotation() });
             }
             sf::Packet packet{ PacketFactory::PlayerUpdate(updateData) };
-            ConnectedSocket::SendToAll(clients, packet);
+            for (auto& [key, value] : clients) {
+                value.Send(packet);
+            }
         });
         if(!executedTick) {
             sf::sleep(sf::milliseconds(1));

@@ -6,6 +6,7 @@
 #include <SFML/Network/TcpSocket.hpp>
 #include <SFML/Network/TcpListener.hpp>
 #include <SFML/System/Clock.hpp>
+#include <iostream>
 
 struct ConnectedSocket {
     std::unique_ptr<sf::TcpSocket> socket;
@@ -23,18 +24,15 @@ struct ConnectedSocket {
             func(packet);
         }
     }
-    float TimeSinceLastPacket() {
+    float TimeSinceLastPacket() const {
         return lastReceived.getElapsedTime().asSeconds();
     }
     void Send(sf::Packet& packet) {
-        socket->send(packet);
-    }
-    bool IsConnected() {
-        return connected;
-    }
-    static void SendToAll(std::unordered_map<std::uint16_t, ConnectedSocket>& map, sf::Packet& packet) {
-        for (auto& [key, value] : map) {
-            value.Send(packet);
+        if(socket->send(packet) == sf::Socket::Disconnected) {
+            connected = false;
         }
+    }
+    bool IsConnected() const {
+        return connected;
     }
 };
