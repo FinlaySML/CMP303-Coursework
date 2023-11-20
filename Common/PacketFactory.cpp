@@ -6,15 +6,25 @@ PacketFactory::PacketType PacketFactory::GetType(sf::Packet& packet) {
     return type;
 }
 
-sf::Packet PacketFactory::JoinGame(std::uint16_t entityId, sf::Vector2f position, float rotation) {
+sf::Packet PacketFactory::JoinGame(std::uint16_t entityId, sf::Vector2f position, float rotation, const std::vector<sf::Vector2i>& barrier) {
     sf::Packet packet;
     packet << static_cast<std::uint8_t>(PacketType::JOIN_GAME) << entityId << position.x << position.y << rotation;
+    packet << barrier.size();
+    for (const auto& data : barrier) {
+        packet << data.x << data.y;
+    }
     return packet;
 }
 
 PacketFactory::JoinGameData PacketFactory::JoinGame(sf::Packet& packet) {
     JoinGameData data;
     packet >> data.playerEntityId >> data.position.x >> data.position.y;
+    size_t size{};
+    packet >> size;
+    data.barriers.resize(size);
+    for (auto& data : data.barriers) {
+        packet >> data.x >> data.y;
+    }
     return data;
 }
 

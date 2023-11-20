@@ -18,8 +18,9 @@ public:
 		std::uint16_t playerEntityId;
 		sf::Vector2f position;
 		float rotation;
+		std::vector<sf::Vector2i> barriers;
 	};
-	static sf::Packet JoinGame(std::uint16_t playerEntityId, sf::Vector2f position, float rotation);
+	static sf::Packet JoinGame(std::uint16_t playerEntityId, sf::Vector2f position, float rotation, const std::vector<sf::Vector2i>& barriers);
 	static JoinGameData JoinGame(sf::Packet& packet);
 	// Update Player
 	struct PlayerUpdateData {

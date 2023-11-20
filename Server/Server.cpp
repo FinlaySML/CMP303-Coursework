@@ -32,7 +32,7 @@ void CheckForNewClient(sf::TcpListener& listener) {
     }
     std::uint16_t id{ GetNewID() };
     ConnectedSocket& client = clients.insert({ id, std::move(socket) }).first->second;
-    PlayerEntity& newPlayer = players.insert({ id, PlayerEntity{id, {0.5f, 0.5f}, 0.0f} }).first->second;
+    PlayerEntity& newPlayer = players.insert({ id, PlayerEntity{id, {0.0f, 0.0f}, 0.0f} }).first->second;
     sf::Packet packet{ PacketFactory::JoinGame(newPlayer.id, newPlayer.getPosition(), newPlayer.getRotation()) };
     client.Send(packet);
     ServerMessage(std::format("A new player ({}) has joined the game", id));

@@ -1,11 +1,22 @@
 #include "InGame.h"
 #include <iostream>
 #include "ConnectToServer.h"
+#include <SFML/Graphics/Sprite.hpp>
+#include <array>
 
 InGame::InGame(std::unique_ptr<sf::TcpSocket>&& server, PacketFactory::JoinGameData data) : 
 server{ std::move(server) },
 tickClock{ 60 }, 
-localPlayer{ data.playerEntityId, data.position, data.rotation, true } {}
+localPlayer{ data.playerEntityId, data.position, data.rotation, true } {
+    brickTexture.loadFromFile("brick.png");
+    bricks.push_back({ 0, 0 });
+    bricks.push_back({1, 0});
+    bricks.push_back({ 2, 0 });
+    bricks.push_back({ 3, 0 });
+    bricks.push_back({ 0, 1 });
+    bricks.push_back({ 0, 2 });
+    bricks.push_back({ 0, 3 });
+}
 
 void InGame::Update(sf::RenderWindow& window) {
     //World View (for getting the world position of the mouse in update)
@@ -39,19 +50,71 @@ void InGame::Update(sf::RenderWindow& window) {
         if (window.hasFocus()) {
             PlayerEntity::InputData inputData{ localPlayer.GetInputData(window) };
             localPlayer.Update(tickClock.GetTickDelta(), inputData);
+            Collision();
             sf::Packet packet{ PacketFactory::PlayerInput(inputData) };
             server.Send(packet);
         }
     });
 }
 
+std::array<sf::Vector2f, 4> directions = {
+    sf::Vector2f(-1, 0),
+    sf::Vector2f(1, 0),
+    sf::Vector2f(0,-1),
+    sf::Vector2f(0, 1)
+};
+
+void InGame::Collision()
+{
+    for (int i = 0; i < 3; i++) {
+        float overlap = 0.0f;
+        size_t mostOverlap = 0;
+        for (size_t barrierIndex = 0; barrierIndex < bricks.size(); barrierIndex++) {
+            sf::FloatRect barrier{ sf::Vector2f(bricks[barrierIndex]), sf::Vector2f(1,1)};
+            sf::FloatRect body{ localPlayer.GetCollisionBox()};
+            if (barrier.intersects(body)) {
+                float top = std::max(barrier.top, body.top);
+                float left = std::max(barrier.left, body.left);
+                float bottom = std::min(barrier.top + barrier.height, body.top + body.height);
+                float right = std::min(barrier.left + barrier.width, body.left + body.width);
+                float thisOverlap = (bottom - top) * (right - left);
+                if (thisOverlap > overlap) {
+                    overlap = thisOverlap;
+                    mostOverlap = barrierIndex;
+                }
+            }
+        }
+        if (overlap > 0.0f) {
+            sf::FloatRect barrier{ sf::Vector2f(bricks[mostOverlap]), sf::Vector2f(1,1) };
+            sf::FloatRect body{ localPlayer.GetCollisionBox() };
+            std::array<float, 4> ejects = {
+                std::abs(barrier.left - body.width - body.left), //left
+                std::abs(barrier.left + barrier.width - body.left), //right
+                std::abs(barrier.top - body.height - body.top), //top
+                std::abs(barrier.top + barrier.height - body.top) //bottom
+            };
+            size_t index = std::distance(ejects.begin(), std::min_element(ejects.begin(), ejects.end()));
+            localPlayer.setPosition(localPlayer.getPosition() + directions[index] * ejects[index]);
+        }
+        else {
+            break;
+        }
+    }
+}
+
 void InGame::Render(sf::RenderWindow& window) {
+    sf::Sprite brick{brickTexture};
+    brick.setScale(1.0f / 16.0f, 1.0f / 16.0f);
     //Render
     window.setView(sf::View{ sf::Vector2f{0, 0}, sf::Vector2f{16, 12} });
     for (auto& [id, player] : otherPlayers) {
         window.draw(player);
     }
     window.draw(localPlayer);
+    for(auto& pos : bricks){
+        brick.setPosition(sf::Vector2f{ pos });
+        window.draw(brick);
+    }
     //UI
     window.setView(sf::View{ sf::Vector2f{window.getSize()} / 2.0f,sf::Vector2f{window.getSize()} });
 }
