@@ -53,13 +53,19 @@ void CheckForDisconnectedClients() {
 
 void main()
 {
-    barriers.push_back({ 0, 0 });
-    barriers.push_back({ 1, 0 });
-    barriers.push_back({ 2, 0 });
-    barriers.push_back({ 3, 0 });
-    barriers.push_back({ 0, 1 });
-    barriers.push_back({ 0, 2 });
-    barriers.push_back({ 0, 3 });
+    for (int i = 0; i < 16; i++) {
+        barriers.push_back({ i - 8,-6 });
+        barriers.push_back({ i - 8, 5 });
+    }
+    for (int i = 0; i < 10; i++) {
+        barriers.push_back({ -8,i-5 });
+        barriers.push_back({ 7, i-5 });
+    }
+    for (int i = 0; i < 6; i++) {
+        barriers.push_back({ -5,i - 3 });
+        barriers.push_back({ 4, i - 3 });
+    }
+
     sf::TcpListener listener;
     listener.setBlocking(false);
     if (listener.listen(DEFAULT_PORT) == sf::Socket::Error) {
