@@ -18,7 +18,6 @@ public:
     InGame(std::unique_ptr<sf::TcpSocket>&& server, PacketFactory::JoinGameData data);
     void ProcessEvent(const sf::Event& event) override {}
     void Update(sf::RenderWindow& window) override;
-    void Collision();
     void Render(sf::RenderWindow& window) override;
     std::optional<std::unique_ptr<ClientState>> ChangeState() override;
     sf::Color GetClearColor() override;

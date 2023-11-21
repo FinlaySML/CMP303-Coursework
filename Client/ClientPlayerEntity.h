@@ -4,7 +4,6 @@
 class ClientPlayerEntity : public PlayerEntity, public sf::Drawable {
 	sf::CircleShape body;
 	sf::RectangleShape gun;
-	sf::RectangleShape sight;
 	bool localPlayer;
 public:
 	ClientPlayerEntity(std::uint16_t id, sf::Vector2f position, float rotation, bool localPlayer = false);

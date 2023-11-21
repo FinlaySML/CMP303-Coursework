@@ -50,13 +50,13 @@ std::vector<PacketFactory::PlayerUpdateData> PacketFactory::PlayerUpdate(sf::Pac
 
 sf::Packet PacketFactory::PlayerInput(PlayerEntity::InputData inputData) {
     sf::Packet packet;
-    packet << static_cast<std::uint8_t>(PacketType::PLAYER_INPUT) << inputData.w << inputData.a << inputData.s << inputData.d << inputData.rotation;
+    packet << static_cast<std::uint8_t>(PacketType::PLAYER_INPUT) << inputData.w << inputData.a << inputData.s << inputData.d << inputData.target.x << inputData.target.y;
     return packet;
 }
 
 PlayerEntity::InputData PacketFactory::PlayerInput(sf::Packet& packet) {
     PlayerEntity::InputData data;
-    packet >> data.w >> data.a >> data.s >> data.d >> data.rotation;
+    packet >> data.w >> data.a >> data.s >> data.d >> data.target.x >> data.target.y;
     return data;
 }
 

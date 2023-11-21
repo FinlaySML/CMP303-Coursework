@@ -8,6 +8,8 @@
 #include <format>
 #include "Server.h"
 
+#define DEBUG_CLONE
+
 std::uint16_t GetNewID(){
     static std::uint16_t usedEntityIds{0};
     usedEntityIds++;
@@ -65,6 +67,10 @@ void main()
         barriers.push_back({ -5,i - 3 });
         barriers.push_back({ 4, i - 3 });
     }
+    for (int i = 0; i < 6; i++) {
+        barriers.push_back({ -i+1,2 });
+        barriers.push_back({ i-2, -3 });
+    }
 
     sf::TcpListener listener;
     listener.setBlocking(false);
@@ -83,14 +89,20 @@ void main()
                     PacketFactory::PacketType type{ PacketFactory::GetType(packet) };
                     if (type == PacketFactory::PacketType::PLAYER_INPUT) {
                         PlayerEntity::InputData data = PacketFactory::PlayerInput(packet);
-                        players.at(id).Update(tickClock.GetTickDelta(), data);
+                        PlayerEntity& player = players.at(id);
+                        player.Update(tickClock.GetTickDelta(), data);
+                        player.Collision(barriers);
                     }
                 });
             }
             // Send Movement Packets
             std::vector<PacketFactory::PlayerUpdateData> updateData;
             for (auto& [id, player] : players) {
-                updateData.push_back({ player.id, player.getPosition(), player.getRotation() });
+                std::uint16_t localId = player.id;
+#ifdef DEBUG_CLONE
+                if(localId == 0) localId = 999;
+#endif
+                updateData.push_back({ localId, player.getPosition(), player.getRotation() });
             }
             sf::Packet packet{ PacketFactory::PlayerUpdate(updateData) };
             for (auto& [key, value] : clients) {
