@@ -6,14 +6,17 @@
 #include "PacketFactory.h"
 #include "ConnectedSocket.h"
 #include <SFML/Graphics/Texture.hpp>
+#include "ClientWorld.h"
+#include <SFML/Audio.hpp>
 
 class InGame : public ClientState {
     ConnectedSocket server;
     TickClock tickClock;
-    std::unordered_map<std::uint16_t, ClientPlayerEntity> otherPlayers;
-    ClientPlayerEntity localPlayer;
-    sf::Texture brickTexture;
-    std::vector<sf::Vector2i> barriers;
+    ClientWorld world;
+    ClientPlayerEntity* localPlayer;
+    sf::SoundBuffer minigunSoundSource;
+    sf::Sound minigunSound;
+    std::vector<sf::Vector2f> bulletHoles;
 public:
     InGame(std::unique_ptr<sf::TcpSocket>&& server, PacketFactory::JoinGameData data);
     void ProcessEvent(const sf::Event& event) override {}

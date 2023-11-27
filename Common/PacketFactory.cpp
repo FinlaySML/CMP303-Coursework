@@ -6,12 +6,13 @@ PacketFactory::PacketType PacketFactory::GetType(sf::Packet& packet) {
     return type;
 }
 
-sf::Packet PacketFactory::JoinGame(std::uint16_t entityId, sf::Vector2f position, float rotation, const std::vector<sf::Vector2i>& barrier) {
+sf::Packet PacketFactory::JoinGame(std::uint16_t entityId, sf::Vector2f position, float rotation, const std::vector<JoinGameData::BarrierData>& barrier) {
     sf::Packet packet;
-    packet << static_cast<std::uint8_t>(PacketType::JOIN_GAME) << entityId << position.x << position.y << rotation;
+    packet << static_cast<PacketTypeUnderlying>(PacketType::JOIN_GAME) << entityId << position.x << position.y << rotation;
     packet << barrier.size();
     for (const auto& data : barrier) {
-        packet << data.x << data.y;
+        packet << data.id;
+        packet << data.position.x << data.position.y;
     }
     return packet;
 }
@@ -23,14 +24,15 @@ PacketFactory::JoinGameData PacketFactory::JoinGame(sf::Packet& packet) {
     packet >> size;
     data.barriers.resize(size);
     for (auto& data : data.barriers) {
-        packet >> data.x >> data.y;
+        packet >> data.id;
+        packet >> data.position.x >> data.position.y;
     }
     return data;
 }
 
 sf::Packet PacketFactory::PlayerUpdate(const std::vector<PacketFactory::PlayerUpdateData>& updateData) {
     sf::Packet packet;
-    packet << static_cast<std::uint8_t>(PacketType::PLAYER_UPDATE) << updateData.size();
+    packet << static_cast<PacketTypeUnderlying>(PacketType::PLAYER_UPDATE) << updateData.size();
     for(const auto& data : updateData) {
         packet << data.entityId << data.position.x << data.position.y << data.rotation;
     }
@@ -50,13 +52,34 @@ std::vector<PacketFactory::PlayerUpdateData> PacketFactory::PlayerUpdate(sf::Pac
 
 sf::Packet PacketFactory::PlayerInput(PlayerEntity::InputData inputData) {
     sf::Packet packet;
-    packet << static_cast<std::uint8_t>(PacketType::PLAYER_INPUT) << inputData.w << inputData.a << inputData.s << inputData.d << inputData.target.x << inputData.target.y;
+    packet << static_cast<PacketTypeUnderlying>(PacketType::PLAYER_INPUT) << inputData.w << inputData.a << inputData.s << inputData.d << inputData.target.x << inputData.target.y;
     return packet;
 }
 
 PlayerEntity::InputData PacketFactory::PlayerInput(sf::Packet& packet) {
     PlayerEntity::InputData data;
     packet >> data.w >> data.a >> data.s >> data.d >> data.target.x >> data.target.y;
+    return data;
+}
+
+sf::Packet PacketFactory::PlayerShoot() {
+    sf::Packet packet;
+    packet << static_cast<PacketTypeUnderlying>(PacketType::PLAYER_SHOOT);
+    return packet;
+}
+
+sf::Packet PacketFactory::PlayerDamage(EntityID id, int amount) {
+    sf::Packet packet;
+    packet << static_cast<PacketTypeUnderlying>(PacketType::PLAYER_DAMAGE);
+    packet << id;
+    packet << amount;
+    return packet;
+}
+
+PacketFactory::PlayerDamageData PacketFactory::PlayerDamage(sf::Packet& packet) {
+    PacketFactory::PlayerDamageData data{};
+    packet >> data.id;
+    packet >> data.amount;
     return data;
 }
 

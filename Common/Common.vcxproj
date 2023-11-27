@@ -133,16 +133,22 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="BarrierEntity.h" />
     <ClInclude Include="ConnectedSocket.h" />
+    <ClInclude Include="Entity.h" />
     <ClInclude Include="PacketFactory.h" />
     <ClInclude Include="PlayerEntity.h" />
     <ClInclude Include="TickClock.h" />
+    <ClInclude Include="World.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="BarrierEntity.cpp" />
     <ClCompile Include="ConnectedSocket.cpp" />
+    <ClCompile Include="Entity.cpp" />
     <ClCompile Include="PacketFactory.cpp" />
     <ClCompile Include="PlayerEntity.cpp" />
     <ClCompile Include="TickClock.cpp" />
+    <ClCompile Include="World.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

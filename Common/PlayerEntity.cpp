@@ -1,8 +1,9 @@
 #include "PlayerEntity.h"
 #include <iostream>
 #include <array>
+#include <ranges>
 
-PlayerEntity::PlayerEntity(std::uint16_t entityId, sf::Vector2f position, float rotation) : id{ entityId } {
+PlayerEntity::PlayerEntity(EntityID id, sf::Vector2f position, float rotation) : Entity(EntityType::PLAYER, id), health{1000} {
 	Update(position, rotation);
 }
 
@@ -18,29 +19,14 @@ std::array<sf::Vector2f, 4> directions = {
     sf::Vector2f(0, 1)
 };
 
-void PlayerEntity::Collision(const std::vector<sf::Vector2i>& barriers) {
+void PlayerEntity::Collision(World* world) {
     for (int i = 0; i < 2; i++) {
-        float overlap = 0.0f;
-        size_t mostOverlap = 0;
-        for (size_t barrierIndex = 0; barrierIndex < barriers.size(); barrierIndex++) {
-            sf::FloatRect barrier{ sf::Vector2f(barriers[barrierIndex]), sf::Vector2f(1,1) };
-            sf::FloatRect body{ GetCollisionBox() };
-            if (barrier.intersects(body)) {
-                float top = std::max(barrier.top, body.top);
-                float left = std::max(barrier.left, body.left);
-                float bottom = std::min(barrier.top + barrier.height, body.top + body.height);
-                float right = std::min(barrier.left + barrier.width, body.left + body.width);
-                float thisOverlap = (bottom - top) * (right - left);
-                if (thisOverlap > overlap) {
-                    overlap = thisOverlap;
-                    mostOverlap = barrierIndex;
-                }
-            }
-        }
-        if (overlap == 0.0f) {
+        auto result = world->GetIntersecting(this);
+        if (result.empty()) {
             break;
         }
-        sf::FloatRect barrier{ sf::Vector2f(barriers[mostOverlap]), sf::Vector2f(1,1) };
+        auto maxOverlap = std::ranges::max_element(result, {}, [](World::IntersectionResult& ir){return ir.overlap;});
+        sf::FloatRect barrier{ maxOverlap->entity->GetCollisionBox() };
         sf::FloatRect body{ GetCollisionBox() };
         std::array<float, 4> ejects = {
             std::abs(barrier.left - body.width - body.left), //left
@@ -70,6 +56,17 @@ void PlayerEntity::Update(float deltaTime, InputData inputData) {
     sf::Vector2f diff = inputData.target - getPosition();
     float rotation = std::atan2f(diff.y, diff.x) * 180.0f / 3.1415926535f;
 	Update(pos, rotation);
+}
+
+int PlayerEntity::GetHealth() const {
+    return health;
+}
+
+void PlayerEntity::Damage(int amount) {
+    health -= amount;
+    if(health < 0) {
+        health = 0;
+    }
 }
 
 sf::FloatRect PlayerEntity::GetCollisionBox() const

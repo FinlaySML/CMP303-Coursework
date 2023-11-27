@@ -1,16 +1,21 @@
 #pragma once
-#include <SFML/Graphics.hpp>
+#include "Entity.h"
+#include <vector>
+#include "World.h"
 
-class PlayerEntity : public sf::Transformable {
+class PlayerEntity : public Entity {
 public:
 	struct InputData {
 		bool w, a, s, d;
 		sf::Vector2f target;
 	};
-	PlayerEntity(std::uint16_t id, sf::Vector2f position, float rotation);
+	PlayerEntity(EntityID id, sf::Vector2f position, float rotation);
 	void Update(sf::Vector2f position, float rotation);
-	void Collision(const std::vector<sf::Vector2i>& barriers);
+	sf::FloatRect GetCollisionBox() const override;
+	void Collision(World* world);
 	void Update(float deltaTime, InputData inputData);
-	sf::FloatRect GetCollisionBox() const;
-	const std::uint16_t id;
+	int GetHealth() const;
+	void Damage(int amount);
+private:
+	int health;
 };
