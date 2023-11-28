@@ -9,7 +9,6 @@ PlayerEntity(entityId, position, rotation),
 body{0.4f}, 
 gun{sf::Vector2f{0.3f, 0.2f}}, 
 localPlayer{localPlayer}, 
-hit{sf::Vector2f{0.2f,0.2f}},
 gunCooldown{0} {
 	if (localPlayer) {
 		body.setOutlineThickness(0.05f);
@@ -20,8 +19,6 @@ gunCooldown{0} {
 	gun.setFillColor({ 0,64,0 });
 	gun.setOrigin(gun.getSize() * 0.5f);
 	gun.setPosition(body.getRadius(), 0);
-	hit.setOrigin(hit.getSize() * 0.5f);
-	hit.setPosition(1000.0f, 1000.0f);
 }
 
 void ClientPlayerEntity::draw(sf::RenderTarget& target, sf::RenderStates states) const {

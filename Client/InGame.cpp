@@ -12,6 +12,7 @@ server{ std::move(server) },
 tickClock{ 60 },
 localPlayer{ new ClientPlayerEntity(data.playerEntityId, data.position, data.rotation, true) } {
     minigunSoundSource.loadFromFile("guns/minigun.ogg");
+    bulletHoleDecal.loadFromFile("bullet_hole.png");
     minigunSound.setBuffer(minigunSoundSource);
     minigunSound.setPitch(0.5f);
     minigunSound.setVolume(30.0f);
@@ -78,6 +79,9 @@ void InGame::Update(sf::RenderWindow& window) {
                 server.Send(shootPacket);
                 minigunSound.play();
                 if(shootData.bulletHole) {
+                    if(bulletHoles.size() > 100) {
+                        bulletHoles.erase(bulletHoles.begin());
+                    }
                     bulletHoles.push_back(shootData.bulletHole.value());
                 }
             }
@@ -89,6 +93,14 @@ void InGame::Render(sf::RenderWindow& window) {
     //Render
     window.setView(sf::View{ sf::Vector2f{0, 0}, sf::Vector2f{16, 12} });
     world.Render(window);
+    sf::Sprite bhSprite;
+    bhSprite.setTexture(bulletHoleDecal);
+    bhSprite.setScale(1 / 32.0f, 1 / 32.0f);
+    bhSprite.setOrigin(bhSprite.getLocalBounds().getSize()/2.0f);
+    for(auto& p : bulletHoles) {
+        bhSprite.setPosition(p);
+        window.draw(bhSprite);
+    }
     //UI
     window.setView(sf::View{ sf::Vector2f{window.getSize()} / 2.0f, sf::Vector2f{window.getSize()} });
     sf::Text text{std::format("HP {}", localPlayer->GetHealth()), FontManager::GetArial()};

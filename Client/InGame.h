@@ -17,6 +17,7 @@ class InGame : public ClientState {
     sf::SoundBuffer minigunSoundSource;
     sf::Sound minigunSound;
     std::vector<sf::Vector2f> bulletHoles;
+    sf::Texture bulletHoleDecal;
 public:
     InGame(std::unique_ptr<sf::TcpSocket>&& server, PacketFactory::JoinGameData data);
     void ProcessEvent(const sf::Event& event) override {}
