@@ -67,12 +67,17 @@ void InGame::Update(sf::RenderWindow& window) {
             }
         });
         //Local Player Update
+        PlayerEntity::InputData inputData;
+        inputData.target = lastMousePosition;
         if (window.hasFocus()) {
-            PlayerEntity::InputData inputData{ localPlayer->GetInputData(window) };
-            localPlayer->Update(tickClock.GetTickDelta(), inputData);
-            localPlayer->Collision(&world);
-            sf::Packet inputPacket{ PacketFactory::PlayerInput(inputData) };
-            server.Send(inputPacket);
+            inputData = localPlayer->GetInputData(window);
+            lastMousePosition = inputData.target;
+        }
+        localPlayer->UpdateWithInput(tickClock.GetTickDelta(), inputData);
+        localPlayer->Collision(&world);
+        sf::Packet inputPacket{ PacketFactory::PlayerInput(inputData) };
+        server.Send(inputPacket);
+        if (window.hasFocus()) {
             ClientPlayerEntity::ShootData shootData{localPlayer->UpdateShoot(&world)};
             if(shootData.firedGun) {
                 sf::Packet shootPacket{ PacketFactory::PlayerShoot() };

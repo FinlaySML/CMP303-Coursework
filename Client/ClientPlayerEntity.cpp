@@ -27,6 +27,16 @@ void ClientPlayerEntity::draw(sf::RenderTarget& target, sf::RenderStates states)
 	target.draw(gun, states);
 }
 
+void ClientPlayerEntity::Update(sf::Vector2f position, float rotation) {
+	PlayerEntity::Update(position, rotation);
+	if (damageReddening > 0 ) {
+		damageReddening--;
+		body.setFillColor({ 255,55,0 });
+	} else {
+		body.setFillColor({ 0,128,0 });
+	}
+}
+
 PlayerEntity::InputData ClientPlayerEntity::GetInputData(sf::RenderWindow& window) {
 	InputData inputData{};
 	inputData.w = sf::Keyboard::isKeyPressed(sf::Keyboard::W);
@@ -47,9 +57,16 @@ ClientPlayerEntity::ShootData ClientPlayerEntity::UpdateShoot(ClientWorld* world
 		gunCooldown = 10;
 		auto result = world->RayCast(this, getPosition(), getDirection());
 		if(result.size() > 0) {
-			data.bulletHole = getPosition() + getDirection() * result[0].distance;
+			if(result[0].entity->GetType() == EntityType::BARRIER) {
+				data.bulletHole = getPosition() + getDirection() * result[0].distance;
+			}
 		}
 		data.firedGun = true;
 	}
 	return data;
+}
+
+void ClientPlayerEntity::Damage(int amount) {
+	PlayerEntity::Damage(amount);
+	damageReddening = 4;
 }

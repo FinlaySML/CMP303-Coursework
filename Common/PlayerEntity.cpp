@@ -39,7 +39,7 @@ void PlayerEntity::Collision(World* world) {
     }
 }
 
-void PlayerEntity::Update(float deltaTime, InputData inputData) {
+void PlayerEntity::UpdateWithInput(float deltaTime, InputData inputData) {
 	sf::Vector2f pos = getPosition();
 	if (inputData.d) {
 		pos.x += deltaTime * 5.0f;

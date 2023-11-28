@@ -65,7 +65,7 @@ void ServerWorld::Tick(float deltaTime) {
                 PacketFactory::PacketType type{ PacketFactory::GetType(packet) };
                 if (type == PacketFactory::PacketType::PLAYER_INPUT) {
                     PlayerEntity::InputData data = PacketFactory::PlayerInput(packet);
-                    serverPlayer->Update(deltaTime, data);
+                    serverPlayer->UpdateWithInput(deltaTime, data);
                     serverPlayer->Collision(this);
                 }
                 if (type == PacketFactory::PacketType::PLAYER_SHOOT) {

@@ -10,12 +10,12 @@ public:
 		sf::Vector2f target;
 	};
 	PlayerEntity(EntityID id, sf::Vector2f position, float rotation);
-	void Update(sf::Vector2f position, float rotation);
-	sf::FloatRect GetCollisionBox() const override;
+	virtual void Update(sf::Vector2f position, float rotation);
+	void UpdateWithInput(float deltaTime, InputData inputData);
 	void Collision(World* world);
-	void Update(float deltaTime, InputData inputData);
-	int GetHealth() const;
 	void Damage(int amount);
-private:
+	sf::FloatRect GetCollisionBox() const override;
+	int GetHealth() const;
+protected:
 	int health;
 };
