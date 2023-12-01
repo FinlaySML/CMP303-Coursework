@@ -6,14 +6,18 @@
 
 class ServerWorld : public World {
 public:
-    ServerWorld();
+    ServerWorld(unsigned short port);
+    void Update();
+    bool Listening();
     EntityID GetNewID();
+    void Broadcast(sf::Packet& packet, ServerPlayerEntity* excluding = nullptr);
     void Broadcast(const std::string& message);
+    void DamagePlayer(ServerPlayerEntity* target, ServerPlayerEntity* source, int amount);
+private:
     void ConnectClients(sf::TcpListener& listener);
     void DisconnectClients();
     void Tick(float deltaTime);
-    void DamagePlayer(ServerPlayerEntity* target, ServerPlayerEntity* source, int amount);
-private:
+    sf::TcpListener listener;
     EntityID usedEntityIds;
+    bool listening;
 };
-

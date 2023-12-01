@@ -5,10 +5,11 @@
 #include <optional>
 #include <memory>
 #include "Entity.h"
+#include "TickClock.h"
 
 class World {
 public:
-	World();
+	World(int startingTick = 0);
 	void AddEntity(Entity* entity);
 	void RemoveEntity(EntityID entity);
 	std::optional<Entity*> GetEntity(EntityID id);
@@ -23,6 +24,7 @@ public:
 	};
 	std::vector<RayCastResult> RayCast(Entity* exclude, sf::Vector2f origin, sf::Vector2f direction, float maxDistance = 100.f);
 protected:
+	TickClock tickClock;
 	std::unordered_map<EntityID, std::unique_ptr<Entity>> entities;
 };
 

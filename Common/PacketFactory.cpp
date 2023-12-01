@@ -1,14 +1,14 @@
 #include "PacketFactory.h"
 
 PacketFactory::PacketType PacketFactory::GetType(sf::Packet& packet) {
-    PacketFactory::PacketType type;
-    packet >> (std::uint8_t&)type;
-    return type;
+    PacketTypeUnderlying type;
+    packet >> type;
+    return (PacketType)type;
 }
 
-sf::Packet PacketFactory::JoinGame(std::uint16_t entityId, sf::Vector2f position, float rotation, const std::vector<JoinGameData::BarrierData>& barrier) {
+sf::Packet PacketFactory::JoinGame(int tick, EntityID playerEntityId, sf::Vector2f position, float rotation, const std::vector<JoinGameData::BarrierData>& barrier) {
     sf::Packet packet;
-    packet << static_cast<PacketTypeUnderlying>(PacketType::JOIN_GAME) << entityId << position.x << position.y << rotation;
+    packet << static_cast<PacketTypeUnderlying>(PacketType::JOIN_GAME) << tick << playerEntityId << position.x << position.y << rotation;
     packet << barrier.size();
     for (const auto& data : barrier) {
         packet << data.id;
@@ -19,7 +19,7 @@ sf::Packet PacketFactory::JoinGame(std::uint16_t entityId, sf::Vector2f position
 
 PacketFactory::JoinGameData PacketFactory::JoinGame(sf::Packet& packet) {
     JoinGameData data;
-    packet >> data.playerEntityId >> data.position.x >> data.position.y >> data.rotation;
+    packet >> data.tick >> data.playerEntityId >> data.position.x >> data.position.y >> data.rotation;
     size_t size{};
     packet >> size;
     data.barriers.resize(size);
@@ -62,10 +62,40 @@ PlayerEntity::InputData PacketFactory::PlayerInput(sf::Packet& packet) {
     return data;
 }
 
-sf::Packet PacketFactory::PlayerShoot() {
+sf::Packet PacketFactory::PlayerShoot(int tick) {
     sf::Packet packet;
-    packet << static_cast<PacketTypeUnderlying>(PacketType::PLAYER_SHOOT);
+    packet << static_cast<PacketTypeUnderlying>(PacketType::PLAYER_SHOOT) << tick;
     return packet;
+}
+
+int PacketFactory::PlayerShoot(sf::Packet& packet) {
+    int tick{};
+    packet >> tick;
+    return tick;
+}
+
+sf::Packet PacketFactory::GunEffects(GunEffectData data) {
+    sf::Packet packet;
+    packet << static_cast<PacketTypeUnderlying>(PacketType::GUN_EFFECTS);
+    packet << data.bulletHole.has_value();
+    if(data.bulletHole.has_value()) {
+        packet << data.bulletHole.value().x;
+        packet << data.bulletHole.value().y;
+    }
+    return packet;
+}
+
+PacketFactory::GunEffectData PacketFactory::GunEffects(sf::Packet& packet) {
+    GunEffectData data;
+    bool hasBulletHole;
+    packet >> hasBulletHole;
+    if(hasBulletHole) {
+        sf::Vector2f pos;
+        packet >> pos.x;
+        packet >> pos.y;
+        data.bulletHole = pos;
+    }
+    return data;
 }
 
 sf::Packet PacketFactory::PlayerDamage(EntityID id, int amount) {
@@ -85,7 +115,7 @@ PacketFactory::PlayerDamageData PacketFactory::PlayerDamage(sf::Packet& packet) 
 
 sf::Packet PacketFactory::Message(const std::string& message) {
     sf::Packet packet;
-    packet << static_cast<std::uint8_t>(PacketType::MESSAGE) << message;
+    packet << static_cast<PacketTypeUnderlying>(PacketType::MESSAGE) << message;
     return packet;
 }
 

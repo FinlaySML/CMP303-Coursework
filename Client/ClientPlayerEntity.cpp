@@ -1,15 +1,17 @@
 #include "ClientPlayerEntity.h"
+#include "ClientWorld.h"
 #include <SFML/Window/Keyboard.hpp>
 #include <SFML/Window/Mouse.hpp>
 #include <iostream>
 #include <random>
 
-ClientPlayerEntity::ClientPlayerEntity(std::uint16_t entityId, sf::Vector2f position, float rotation, bool localPlayer) : 
+ClientPlayerEntity::ClientPlayerEntity(EntityID entityId, sf::Vector2f position, float rotation, bool localPlayer) : 
 PlayerEntity(entityId, position, rotation), 
 body{0.4f}, 
 gun{sf::Vector2f{0.3f, 0.2f}}, 
 localPlayer{localPlayer}, 
-gunCooldown{0} {
+gunCooldown{0},
+damageReddening{0} {
 	if (localPlayer) {
 		body.setOutlineThickness(0.05f);
 		body.setRadius(body.getRadius() - 0.05f);
@@ -50,20 +52,20 @@ PlayerEntity::InputData ClientPlayerEntity::GetInputData(sf::RenderWindow& windo
 std::mt19937 randGen;
 std::uniform_real_distribution<float> bulletSpread{-2, 2};
 
-ClientPlayerEntity::ShootData ClientPlayerEntity::UpdateShoot(ClientWorld* world) {
-	ShootData data{false, {}};
+std::optional<PacketFactory::GunEffectData> ClientPlayerEntity::UpdateShoot(ClientWorld* world) {
 	if(gunCooldown > 0) gunCooldown--;
 	if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && gunCooldown == 0) {
-		gunCooldown = 10;
+		PacketFactory::GunEffectData data;
+		gunCooldown = 5;
 		auto result = world->RayCast(this, getPosition(), getDirection());
 		if(result.size() > 0) {
 			if(result[0].entity->GetType() == EntityType::BARRIER) {
 				data.bulletHole = getPosition() + getDirection() * result[0].distance;
 			}
 		}
-		data.firedGun = true;
+		return data;
 	}
-	return data;
+	return {};
 }
 
 void ClientPlayerEntity::Damage(int amount) {

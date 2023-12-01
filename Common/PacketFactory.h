@@ -2,7 +2,7 @@
 #include <SFML/Network.hpp>
 #include "PlayerEntity.h"
 
-const std::uint16_t DEFAULT_PORT{29011};
+const unsigned short DEFAULT_PORT{29011};
 
 class PacketFactory {
 public:
@@ -13,12 +13,14 @@ public:
 		PLAYER_INPUT,
 		PLAYER_SHOOT,
 		PLAYER_DAMAGE,
+		GUN_EFFECTS,
 		MESSAGE
 	};
 	static PacketType GetType(sf::Packet& packet);
 	// Join Game
 	struct JoinGameData {
-		std::uint16_t playerEntityId;
+		int tick;
+		EntityID playerEntityId;
 		sf::Vector2f position;
 		float rotation;
 		struct BarrierData {
@@ -27,11 +29,11 @@ public:
 		};
 		std::vector<BarrierData> barriers;
 	};
-	static sf::Packet JoinGame(std::uint16_t playerEntityId, sf::Vector2f position, float rotation, const std::vector<JoinGameData::BarrierData>& barriers);
+	static sf::Packet JoinGame(int tick, EntityID playerEntityId, sf::Vector2f position, float rotation, const std::vector<JoinGameData::BarrierData>& barriers);
 	static JoinGameData JoinGame(sf::Packet& packet);
 	// Update Player
 	struct PlayerUpdateData {
-		std::uint16_t entityId;
+		EntityID entityId;
 		sf::Vector2f position;
 		float rotation;
 	};
@@ -41,7 +43,14 @@ public:
 	static sf::Packet PlayerInput(PlayerEntity::InputData inputData);
 	static PlayerEntity::InputData PlayerInput(sf::Packet& packet);
 	// Shoot
-	static sf::Packet PlayerShoot();
+	static sf::Packet PlayerShoot(int tick);
+	static int PlayerShoot(sf::Packet& packet);
+	// Gun Effects
+	struct GunEffectData {
+		std::optional<sf::Vector2f> bulletHole;
+	};
+	static sf::Packet GunEffects(GunEffectData data);
+	static GunEffectData GunEffects(sf::Packet& packet);
 	// Damage
 	struct PlayerDamageData {
 		EntityID id;

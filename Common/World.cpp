@@ -1,7 +1,8 @@
 #include "World.h"
 #include <unordered_set>
 
-World::World() {}
+World::World(int startingTick) : tickClock{60, startingTick} {
+}
 
 void World::AddEntity(Entity* entity) {
 	entities.insert({entity->GetID(), std::unique_ptr<Entity>(entity)});

@@ -1,6 +1,6 @@
 #include "TickClock.h"
 
-TickClock::TickClock(float ticksPerSecond) : tickDelta{1.0f/ticksPerSecond}, totalTime{0.0f}, tick{0} {
+TickClock::TickClock(float ticksPerSecond, int startingTick) : tickDelta{1.0f/ticksPerSecond}, totalTime{0.0f}, tick{ startingTick } {
 }
 
 float TickClock::GetTickDelta() {

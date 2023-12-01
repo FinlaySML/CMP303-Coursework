@@ -8,7 +8,7 @@ class TickClock {
 	float tickDelta;
 	int tick;
 public:
-	TickClock(float ticksPerSecond);
+	TickClock(float ticksPerSecond, int startingTick = 0);
 	float GetTickDelta();
 	int GetTick();
 	bool ExecuteTick(std::function<void(void)> tickFunction);
