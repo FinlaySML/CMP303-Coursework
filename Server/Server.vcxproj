@@ -131,6 +131,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="ConnectedClient.cpp" />
     <ClCompile Include="Server.cpp" />
     <ClCompile Include="ServerPlayerEntity.cpp" />
     <ClCompile Include="ServerWorld.cpp" />
@@ -141,6 +142,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ConnectedClient.h" />
     <ClInclude Include="Server.h" />
     <ClInclude Include="ServerPlayerEntity.h" />
     <ClInclude Include="ServerWorld.h" />

@@ -1,25 +1,15 @@
 #include "ClientWorld.h"
 #include "ClientPlayerEntity.h"
-#include "BarrierEntity.h"
-#include "FontManager.h"
+#include "ClientBarrierEntity.h"
+#include "ClientBulletHoleEntity.h"
+#include "ResourceManager.h"
 #include <format>
 #include <SFML/Graphics/Text.hpp>
 #include <SFML/Graphics/Sprite.hpp>
 #include <algorithm>
 
-ClientWorld::ClientWorld(std::unique_ptr<sf::TcpSocket>&& server, PacketFactory::JoinGameData data) : World(data.tick), 
-server { std::move(server) },
-localPlayer{ new ClientPlayerEntity(data.playerEntityId, data.position, data.rotation, true) } {
-    minigunSoundSource.loadFromFile("guns/minigun.ogg");
-    bulletHoleDecal.loadFromFile("bullet_hole.png");
-    minigunSound.setBuffer(minigunSoundSource);
-    minigunSound.setPitch(0.5f);
-    minigunSound.setVolume(30.0f);
-    AddEntity(localPlayer);
-    for (auto& data : data.barriers) {
-        AddEntity(new BarrierEntity(data.id, data.position));
-    }
-    brickTexture.loadFromFile("brick.png");
+ClientWorld::ClientWorld(std::unique_ptr<sf::TcpSocket>&& server, int initialTick) : World(server->getRemotePort(), initialTick),
+server { std::move(server), &udp } {
 }
 
 void ClientWorld::Update(sf::RenderWindow& window) {
@@ -29,115 +19,124 @@ void ClientWorld::Update(sf::RenderWindow& window) {
     tickClock.ExecuteTick([&]() {
         //Receive Packets
         server.ProcessPackets([&](sf::Packet& packet) {
-            PacketFactory::PacketType type{ PacketFactory::GetType(packet) };
-            if (type == PacketFactory::PacketType::PLAYER_UPDATE) {
-                auto updateData = PacketFactory::PlayerUpdate(packet);
-                for (const auto& data : updateData) {
-                    auto entity = GetEntity(data.entityId);
-                    if (entity.has_value()) {
-                        Entity* val{ entity.value() };
-                        if (val->GetType() != EntityType::PLAYER) {
-                            std::cout << "Client-Server entity type mismatch" << std::endl;
-                        } else if (val->GetID() != localPlayer->GetID()) {
-                            ClientPlayerEntity* playerEntity{ (ClientPlayerEntity*)val };
-                            playerEntity->Update(data.position, data.rotation);
-                        }
-                    } else {
-                        AddEntity(new ClientPlayerEntity{ data.entityId, data.position, data.rotation });
-                    }
+            PacketType type{ PacketFactory::GetType(packet) };
+            if(type == PacketType::ENTITY_CREATE) {
+                Entity* entity{ CreateFromPacket(packet)};
+                if(entity) {
+                    AddEntity(entity);
                 }
             }
-            if (type == PacketFactory::PacketType::PLAYER_DAMAGE) {
-                auto data = PacketFactory::PlayerDamage(packet);
-                auto entity = GetEntity(data.id);
-                if (entity.has_value()) {
-                    Entity* e{ entity.value() };
-                    if (e->GetType() == EntityType::PLAYER) {
-                        ((ClientPlayerEntity*)e)->Damage(data.amount);
-                    } else {
-                        std::cout << "Can't damage an entity that isn't a player" << std::endl;
-                    }
-                } else {
-                    std::cout << "Can't damage an entity that doesn't exist" << std::endl;
+            if(type == PacketType::ENTITY_UPDATE) {
+                EntityID id;
+                packet >> id;
+                if(id != localPlayer) {
+                    GetEntity(id)->UpdateFromPacket(packet);
                 }
             }
-            if (type == PacketFactory::PacketType::GUN_EFFECTS) {
-                PacketFactory::GunEffectData data{PacketFactory::GunEffects(packet)};
-                GunEffects(data);
+            if(type == PacketType::ENTITY_DELETE) {
+                EntityID id{PacketFactory::EntityDelete(packet)};
+                RemoveEntity(id);
             }
-            if (type == PacketFactory::PacketType::MESSAGE) {
+            if(type == PacketType::PLAYER_SET_CLIENT) {
+                std::optional<EntityID> id{PacketFactory::PlayerSetClientID(packet)};
+                localPlayer = id;
+            }
+            if (type == PacketType::PLAYER_DAMAGE) {
+                auto data{PacketFactory::PlayerDamage(packet)};
+                auto entity{GetEntity(data.id, EntityType::PLAYER)};
+                ((ClientPlayerEntity*)entity)->Damage(data.amount);
+            }
+            if (type == PacketType::GUN_EFFECTS) {
+                ResourceManager::GetInstance().minigunSound.play();
+            }
+            if (type == PacketType::MESSAGE) {
                 std::string message = PacketFactory::Message(packet);
                 std::cout << message << std::endl;
             }
         });
+        udp.ProcessPackets([&](sf::Packet& packet, sf::IpAddress& ip) {
+            PacketType type{ PacketFactory::GetType(packet) };
+            if (type == PacketType::ENTITY_UPDATE) {
+                EntityID id;
+                packet >> id;
+                if (id != localPlayer) {
+                    GetEntity(id)->UpdateFromPacket(packet);
+                }
+            }
+        });
         //Local Player Update
-        PlayerEntity::InputData inputData;
-        inputData.target = lastMousePosition;
-        if (window.hasFocus()) {
-            inputData = localPlayer->GetInputData(window);
-            lastMousePosition = inputData.target;
-        }
-        localPlayer->UpdateWithInput(tickClock.GetTickDelta(), inputData);
-        localPlayer->Collision(this);
-        sf::Packet inputPacket{ PacketFactory::PlayerInput(inputData) };
-        server.Send(inputPacket);
-        if (window.hasFocus()) {
-            std::optional<PacketFactory::GunEffectData> shootData{ localPlayer->UpdateShoot(this) };
-            if (shootData.has_value()) {
-                sf::Packet shootPacket{ PacketFactory::PlayerShoot(tickClock.GetTick()) };
-                server.Send(shootPacket);
-                GunEffects(shootData.value());
+        if(localPlayer && TryGetEntity(localPlayer.value())){
+            ClientPlayerEntity* player{(ClientPlayerEntity*)GetEntity(localPlayer.value(), EntityType::PLAYER)};
+            PlayerEntity::InputData inputData;
+            inputData.target = lastMousePosition;
+            if (window.hasFocus()) {
+                inputData = player->GetInputData(window);
+                lastMousePosition = inputData.target;
+            }
+            player->UpdateWithInput(tickClock.GetTickDelta(), inputData);
+            player->Collision(this);
+            server.Send(PacketFactory::PlayerInput(inputData));
+            if (window.hasFocus()) {
+                ClientPlayerEntity::ShootData shootData{ player->UpdateShoot(this) };
+                if (shootData.fired) {
+                    sf::Packet shootPacket{ PacketFactory::PlayerShoot(tickClock.GetTick()) };
+                    server.Send(shootPacket);
+                    ResourceManager::GetInstance().minigunSound.play();
+                }
             }
         }
+        for(auto& [id, entity] : entities) {
+            entity->Update(this);
+        }
+        CleanEntities();
     });
 }
 
 void ClientWorld::Render(sf::RenderWindow& window) {
     //Render
     window.setView(sf::View{ sf::Vector2f{0, 0}, sf::Vector2f{16, 12} });
-    sf::Sprite brick{ brickTexture };
-    brick.setScale(1.0f / 16.0f, 1.0f / 16.0f);
     for (auto& [id, entity] : entities) {
-        if (entity->GetType() == EntityType::BARRIER) {
-            brick.setPosition(entity->getPosition());
-            window.draw(brick);
-        }
-    }
-    for (auto& [id, entity] : entities) {
-        if (entity->GetType() == EntityType::PLAYER) {
-            window.draw(*(ClientPlayerEntity*)entity.get());
-        }
-    }
-    std::erase_if(bulletHoles, [&](const BulletHoleData& x) { return (x.creationTick + x.despawnTime) < tickClock.GetTick(); });
-    sf::Sprite bhSprite;
-    bhSprite.setTexture(bulletHoleDecal);
-    bhSprite.setScale(1 / 32.0f, 1 / 32.0f);
-    bhSprite.setOrigin(bhSprite.getLocalBounds().getSize() / 2.0f);
-    for (auto& p : bulletHoles) {
-        bhSprite.setPosition(p.position);
-        sf::Color c{p.color};
-        c.a *= 1.0f - (tickClock.GetTick() - p.creationTick) / (float)p.despawnTime;
-        bhSprite.setColor(c);
-        window.draw(bhSprite);
+        entity->Draw(window, tickClock.GetTick());
     }
     //UI
     window.setView(sf::View{ sf::Vector2f{window.getSize()} / 2.0f, sf::Vector2f{window.getSize()} });
-    sf::Text text{ std::format("HP {}", localPlayer->GetHealth()), FontManager::GetArial() };
-    window.draw(text);
+    if(localPlayer) {
+        ClientPlayerEntity* player{ (ClientPlayerEntity*)GetEntity(localPlayer.value(), EntityType::PLAYER) };
+        sf::Text text{ std::format("HP {}", player->GetHealth()), ResourceManager::GetInstance().arial};
+        window.draw(text);
+    }
+}
+
+Entity* ClientWorld::CreateFromPacket(sf::Packet& packet) {
+    //Packet type should already be consumed
+    EntityType type;
+    EntityID id;
+    sf::Vector2f position;
+    float rotation;
+    packet >> (EntityTypeUnderlying&)type;
+    packet >> id;
+    packet >> position.x >> position.y;
+    packet >> rotation;
+    if (type == EntityType::PLAYER) {
+        return new ClientPlayerEntity(id, position, rotation);
+    }
+    if (type == EntityType::BARRIER) {
+        return new ClientBarrierEntity(id, position);
+    }
+    if (type == EntityType::BULLET_HOLE) {
+        int creationTick, despawnTick;
+        sf::Color color;
+        packet >> creationTick >> despawnTick;
+        packet >> color.r >> color.g >> color.b >> color.a;
+        return new ClientBulletHoleEntity(id, position, rotation, creationTick, despawnTick, color);
+    }
+    return nullptr;
 }
 
 bool ClientWorld::Disconnected() const {
     return !server.IsConnected();
 }
 
-void ClientWorld::GunEffects(const PacketFactory::GunEffectData& data) {
-    minigunSound.play();
-    if (data.bulletHole) {
-        BulletHoleData holeData;
-        holeData.position = data.bulletHole.value();
-        holeData.color = sf::Color::Black;
-        holeData.creationTick = tickClock.GetTick();
-        holeData.despawnTime = 1200;
-        bulletHoles.push_back(holeData);
-    }
+std::optional<EntityID> ClientWorld::GetLocalPlayer() const {
+    return localPlayer;
 }

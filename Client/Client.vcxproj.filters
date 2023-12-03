@@ -30,10 +30,16 @@
     <ClCompile Include="ConnectToServer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="FontManager.cpp">
+    <ClCompile Include="ResourceManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ClientWorld.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ClientBarrierEntity.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ClientBulletHoleEntity.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -50,10 +56,16 @@
     <ClInclude Include="ConnectToServer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="FontManager.h">
+    <ClInclude Include="ResourceManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ClientWorld.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ClientBarrierEntity.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ClientBulletHoleEntity.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

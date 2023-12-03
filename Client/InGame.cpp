@@ -4,11 +4,11 @@
 #include <SFML/Graphics/Sprite.hpp>
 #include <array>
 #include "BarrierEntity.h"
-#include "FontManager.h"
+#include "ResourceManager.h"
 #include <format>
 
-InGame::InGame(std::unique_ptr<sf::TcpSocket>&& server, PacketFactory::JoinGameData data) : 
-world{ std::move(server), data } {
+InGame::InGame(std::unique_ptr<sf::TcpSocket>&& server, int initialTick) : 
+world{ std::move(server), initialTick } {
 }
 
 void InGame::ProcessEvent(const sf::Event& event) {

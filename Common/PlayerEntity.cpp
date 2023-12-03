@@ -26,8 +26,8 @@ void PlayerEntity::Collision(World* world) {
             break;
         }
         auto maxOverlap = std::ranges::max_element(result, {}, [](World::IntersectionResult& ir){return ir.overlap;});
-        sf::FloatRect barrier{ maxOverlap->entity->GetCollisionBox() };
-        sf::FloatRect body{ GetCollisionBox() };
+        sf::FloatRect barrier{ maxOverlap->entity->GetCollisionBox().value()};
+        sf::FloatRect body{ GetCollisionBox().value() };
         std::array<float, 4> ejects = {
             std::abs(barrier.left - body.width - body.left), //left
             std::abs(barrier.left + barrier.width - body.left), //right
@@ -69,7 +69,7 @@ void PlayerEntity::Damage(int amount) {
     }
 }
 
-sf::FloatRect PlayerEntity::GetCollisionBox() const
+std::optional<sf::FloatRect> PlayerEntity::GetCollisionBox() const
 {
-	return { getPosition() - sf::Vector2f(0.4f, 0.4f), sf::Vector2f(0.8f, 0.8f) };
+	return std::make_optional<sf::FloatRect>( getPosition() - sf::Vector2f(0.4f, 0.4f), sf::Vector2f(0.8f, 0.8f) );
 }

@@ -9,7 +9,7 @@
 
 class ClientWorld;
 
-class ClientPlayerEntity : public PlayerEntity, public sf::Drawable {
+class ClientPlayerEntity : public PlayerEntity {
 	sf::CircleShape body;
 	sf::RectangleShape gun;
 	bool localPlayer;
@@ -17,9 +17,14 @@ class ClientPlayerEntity : public PlayerEntity, public sf::Drawable {
 	int damageReddening;
 public:
 	ClientPlayerEntity(EntityID id, sf::Vector2f position, float rotation, bool localPlayer = false);
-	void draw(sf::RenderTarget& target, sf::RenderStates states) const;
-	void Update(sf::Vector2f position, float rotation) override;
+	void Draw(sf::RenderWindow& window, int tick) const;
+	void Update(World* world) override;
 	InputData GetInputData(sf::RenderWindow& window);
-	std::optional<PacketFactory::GunEffectData> UpdateShoot(ClientWorld* world);
+	struct ShootData {
+		bool fired;
+		std::optional<sf::Vector2f> bulletHole;
+	};
+	ShootData UpdateShoot(ClientWorld* world);
 	void Damage(int amount);
+	void SetLocalPlayer(bool value);
 };

@@ -4,41 +4,36 @@
 
 const unsigned short DEFAULT_PORT{29011};
 
+using PacketTypeUnderlying = std::uint8_t;
+enum class PacketType : PacketTypeUnderlying {
+	//Session
+	JOIN_GAME,
+	//Entity
+	ENTITY_CREATE,
+	ENTITY_UPDATE,
+	ENTITY_DELETE,
+	//Player
+	PLAYER_SET_CLIENT,
+	PLAYER_INPUT,
+	PLAYER_SHOOT,
+	PLAYER_DAMAGE,
+	//Other
+	MESSAGE,
+	GUN_EFFECTS
+};
+
 class PacketFactory {
 public:
-	using PacketTypeUnderlying = std::uint8_t;
-	enum class PacketType : PacketTypeUnderlying {
-		JOIN_GAME,
-		PLAYER_UPDATE,
-		PLAYER_INPUT,
-		PLAYER_SHOOT,
-		PLAYER_DAMAGE,
-		GUN_EFFECTS,
-		MESSAGE
-	};
 	static PacketType GetType(sf::Packet& packet);
 	// Join Game
-	struct JoinGameData {
-		int tick;
-		EntityID playerEntityId;
-		sf::Vector2f position;
-		float rotation;
-		struct BarrierData {
-			EntityID id;
-			sf::Vector2f position;
-		};
-		std::vector<BarrierData> barriers;
-	};
-	static sf::Packet JoinGame(int tick, EntityID playerEntityId, sf::Vector2f position, float rotation, const std::vector<JoinGameData::BarrierData>& barriers);
-	static JoinGameData JoinGame(sf::Packet& packet);
-	// Update Player
-	struct PlayerUpdateData {
-		EntityID entityId;
-		sf::Vector2f position;
-		float rotation;
-	};
-	static sf::Packet PlayerUpdate(const std::vector<PlayerUpdateData>& updateData);
-	static std::vector<PlayerUpdateData> PlayerUpdate(sf::Packet& packet);
+	static sf::Packet JoinGame(int tick);
+	static int JoinGame(sf::Packet& packet);
+	// Delete Entity
+	static sf::Packet EntityDelete(EntityID id);
+	static EntityID EntityDelete(sf::Packet& packet);
+	// Set Client Player
+	static sf::Packet PlayerSetClientID(std::optional<EntityID> entityId);
+	static std::optional<EntityID> PlayerSetClientID(sf::Packet& packet);
 	// Send Player Input
 	static sf::Packet PlayerInput(PlayerEntity::InputData inputData);
 	static PlayerEntity::InputData PlayerInput(sf::Packet& packet);
@@ -46,11 +41,7 @@ public:
 	static sf::Packet PlayerShoot(int tick);
 	static int PlayerShoot(sf::Packet& packet);
 	// Gun Effects
-	struct GunEffectData {
-		std::optional<sf::Vector2f> bulletHole;
-	};
-	static sf::Packet GunEffects(GunEffectData data);
-	static GunEffectData GunEffects(sf::Packet& packet);
+	static sf::Packet GunEffects();
 	// Damage
 	struct PlayerDamageData {
 		EntityID id;

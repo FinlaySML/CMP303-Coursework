@@ -14,7 +14,7 @@ public:
 	void UpdateWithInput(float deltaTime, InputData inputData);
 	void Collision(World* world);
 	void Damage(int amount);
-	sf::FloatRect GetCollisionBox() const override;
+	std::optional<sf::FloatRect> GetCollisionBox() const override;
 	int GetHealth() const;
 protected:
 	int health;

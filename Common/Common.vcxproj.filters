@@ -36,6 +36,12 @@
     <ClInclude Include="BarrierEntity.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="BulletHoleEntity.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ConnectedUDP.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="PacketFactory.cpp">
@@ -57,6 +63,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="BarrierEntity.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="BulletHoleEntity.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ConnectedUDP.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

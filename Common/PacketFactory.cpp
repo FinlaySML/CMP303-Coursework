@@ -1,64 +1,72 @@
 #include "PacketFactory.h"
 
-PacketFactory::PacketType PacketFactory::GetType(sf::Packet& packet) {
+PacketType PacketFactory::GetType(sf::Packet& packet) {
     PacketTypeUnderlying type;
     packet >> type;
     return (PacketType)type;
 }
 
-sf::Packet PacketFactory::JoinGame(int tick, EntityID playerEntityId, sf::Vector2f position, float rotation, const std::vector<JoinGameData::BarrierData>& barrier) {
+sf::Packet PacketFactory::JoinGame(int tick) {
     sf::Packet packet;
-    packet << static_cast<PacketTypeUnderlying>(PacketType::JOIN_GAME) << tick << playerEntityId << position.x << position.y << rotation;
-    packet << barrier.size();
-    for (const auto& data : barrier) {
-        packet << data.id;
-        packet << data.position.x << data.position.y;
+    packet << static_cast<PacketTypeUnderlying>(PacketType::JOIN_GAME);
+    packet << tick;
+    return packet;
+}
+
+int PacketFactory::JoinGame(sf::Packet& packet) {
+    int tick;
+    packet >> tick;
+    return tick;
+}
+
+sf::Packet PacketFactory::EntityDelete(EntityID id) {
+    sf::Packet packet;
+    packet << static_cast<PacketTypeUnderlying>(PacketType::ENTITY_DELETE);
+    packet << id;
+    return packet;
+}
+
+EntityID PacketFactory::EntityDelete(sf::Packet& packet) {
+    EntityID id;
+    packet >> id;
+    return id;
+}
+
+sf::Packet PacketFactory::PlayerSetClientID(std::optional<EntityID> entityId) {
+    sf::Packet packet;
+    packet << static_cast<PacketTypeUnderlying>(PacketType::PLAYER_SET_CLIENT);
+    bool hasValue{entityId.has_value()};
+    packet << hasValue;
+    if(hasValue) {
+        packet << entityId.value();
     }
     return packet;
 }
 
-PacketFactory::JoinGameData PacketFactory::JoinGame(sf::Packet& packet) {
-    JoinGameData data;
-    packet >> data.tick >> data.playerEntityId >> data.position.x >> data.position.y >> data.rotation;
-    size_t size{};
-    packet >> size;
-    data.barriers.resize(size);
-    for (auto& data : data.barriers) {
-        packet >> data.id;
-        packet >> data.position.x >> data.position.y;
+std::optional<EntityID> PacketFactory::PlayerSetClientID(sf::Packet& packet) {
+    bool hasValue;
+    packet >> hasValue;
+    if(hasValue) {
+        EntityID id;
+        packet >> id;
+        return id;
+    }else{
+        return {};
     }
-    return data;
-}
-
-sf::Packet PacketFactory::PlayerUpdate(const std::vector<PacketFactory::PlayerUpdateData>& updateData) {
-    sf::Packet packet;
-    packet << static_cast<PacketTypeUnderlying>(PacketType::PLAYER_UPDATE) << updateData.size();
-    for(const auto& data : updateData) {
-        packet << data.entityId << data.position.x << data.position.y << data.rotation;
-    }
-    return packet;
-}
-
-std::vector<PacketFactory::PlayerUpdateData> PacketFactory::PlayerUpdate(sf::Packet& packet) {
-    std::vector<PlayerUpdateData> updateData;
-    size_t updates{};
-    packet >> updates;
-    updateData.resize(updates);
-    for(auto& data : updateData) {
-        packet >> data.entityId >> data.position.x >> data.position.y >> data.rotation;
-    }
-    return updateData;
 }
 
 sf::Packet PacketFactory::PlayerInput(PlayerEntity::InputData inputData) {
     sf::Packet packet;
-    packet << static_cast<PacketTypeUnderlying>(PacketType::PLAYER_INPUT) << inputData.w << inputData.a << inputData.s << inputData.d << inputData.target.x << inputData.target.y;
+    packet << static_cast<PacketTypeUnderlying>(PacketType::PLAYER_INPUT);
+    packet << inputData.w << inputData.a << inputData.s << inputData.d;
+    packet << inputData.target.x << inputData.target.y;
     return packet;
 }
 
 PlayerEntity::InputData PacketFactory::PlayerInput(sf::Packet& packet) {
     PlayerEntity::InputData data;
-    packet >> data.w >> data.a >> data.s >> data.d >> data.target.x >> data.target.y;
+    packet >> data.w >> data.a >> data.s >> data.d;
+    packet >> data.target.x >> data.target.y;
     return data;
 }
 
@@ -74,28 +82,10 @@ int PacketFactory::PlayerShoot(sf::Packet& packet) {
     return tick;
 }
 
-sf::Packet PacketFactory::GunEffects(GunEffectData data) {
+sf::Packet PacketFactory::GunEffects() {
     sf::Packet packet;
     packet << static_cast<PacketTypeUnderlying>(PacketType::GUN_EFFECTS);
-    packet << data.bulletHole.has_value();
-    if(data.bulletHole.has_value()) {
-        packet << data.bulletHole.value().x;
-        packet << data.bulletHole.value().y;
-    }
     return packet;
-}
-
-PacketFactory::GunEffectData PacketFactory::GunEffects(sf::Packet& packet) {
-    GunEffectData data;
-    bool hasBulletHole;
-    packet >> hasBulletHole;
-    if(hasBulletHole) {
-        sf::Vector2f pos;
-        packet >> pos.x;
-        packet >> pos.y;
-        data.bulletHole = pos;
-    }
-    return data;
 }
 
 sf::Packet PacketFactory::PlayerDamage(EntityID id, int amount) {

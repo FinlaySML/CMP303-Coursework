@@ -135,19 +135,23 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Client.cpp" />
+    <ClCompile Include="ClientBarrierEntity.cpp" />
+    <ClCompile Include="ClientBulletHoleEntity.cpp" />
     <ClCompile Include="ClientPlayerEntity.cpp" />
     <ClCompile Include="ClientState.cpp" />
     <ClCompile Include="ClientWorld.cpp" />
     <ClCompile Include="ConnectToServer.cpp" />
-    <ClCompile Include="FontManager.cpp" />
+    <ClCompile Include="ResourceManager.cpp" />
     <ClCompile Include="InGame.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ClientBarrierEntity.h" />
+    <ClInclude Include="ClientBulletHoleEntity.h" />
     <ClInclude Include="ClientPlayerEntity.h" />
     <ClInclude Include="ClientState.h" />
     <ClInclude Include="ClientWorld.h" />
     <ClInclude Include="ConnectToServer.h" />
-    <ClInclude Include="FontManager.h" />
+    <ClInclude Include="ResourceManager.h" />
     <ClInclude Include="InGame.h" />
   </ItemGroup>
   <ItemGroup>

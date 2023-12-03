@@ -9,29 +9,18 @@
 
 class ClientWorld : public World {
 public:
-	ClientWorld(std::unique_ptr<sf::TcpSocket>&& server, PacketFactory::JoinGameData data);
+	ClientWorld(std::unique_ptr<sf::TcpSocket>&& server, int initialTick);
     void Update(sf::RenderWindow& window);
-	void Render(sf::RenderWindow& window);
+    void Render(sf::RenderWindow& window);
+    Entity* CreateFromPacket(sf::Packet& packet);
     bool Disconnected() const;
+    std::optional<EntityID> GetLocalPlayer() const;
 private:
-    void GunEffects(const PacketFactory::GunEffectData& data);
     //Network
     ConnectedSocket server;
     //Input
     sf::Vector2f lastMousePosition;
-    //Resource
-    sf::SoundBuffer minigunSoundSource;
-    sf::Sound minigunSound;
-    sf::Texture bulletHoleDecal;
-    sf::Texture brickTexture;
     //Other
-    struct BulletHoleData {
-        sf::Vector2f position;
-        sf::Color color;
-        int creationTick;
-        int despawnTime;
-    };
-    std::vector<BulletHoleData> bulletHoles;
-    ClientPlayerEntity* localPlayer;
+    std::optional<EntityID> localPlayer;
 };
 

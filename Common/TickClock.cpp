@@ -3,11 +3,11 @@
 TickClock::TickClock(float ticksPerSecond, int startingTick) : tickDelta{1.0f/ticksPerSecond}, totalTime{0.0f}, tick{ startingTick } {
 }
 
-float TickClock::GetTickDelta() {
+float TickClock::GetTickDelta() const {
 	return tickDelta;
 }
 
-int TickClock::GetTick() {
+int TickClock::GetTick() const {
 	return tick;
 }
 

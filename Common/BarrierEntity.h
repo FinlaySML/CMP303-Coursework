@@ -4,6 +4,6 @@
 class BarrierEntity : public Entity {
 public:
 	BarrierEntity(EntityID id, sf::Vector2f position);
-	sf::FloatRect GetCollisionBox() const override;
+	std::optional<sf::FloatRect> GetCollisionBox() const override;
 };
 

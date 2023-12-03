@@ -1,11 +1,11 @@
 #include "ConnectToServer.h"
-#include "FontManager.h"
+#include "ResourceManager.h"
 #include "SFML/Window/Event.hpp"
 #include <SFML/Network/TcpSocket.hpp>
 #include "PacketFactory.h"
 #include "InGame.h"
 
-ConnectToServer::ConnectToServer() : header{ "Enter the server address:", FontManager::GetArial(), 24}, inputField{"", FontManager::GetArial(), 24} {
+ConnectToServer::ConnectToServer() : header{ "Enter the server address:", ResourceManager::GetInstance().arial, 24}, inputField{"", ResourceManager::GetInstance().arial, 24} {
     inputField.setPosition({ 0, 24 });
 }
 
@@ -51,7 +51,7 @@ std::optional<std::unique_ptr<ClientState>> ConnectToServer::ChangeState() {
         if (server->connect(serverAddress, DEFAULT_PORT, sf::seconds(2.0f)) == sf::Socket::Done) {
             sf::Packet packet;
             server->receive(packet);
-            if (PacketFactory::GetType(packet) == PacketFactory::PacketType::JOIN_GAME) {
+            if (PacketFactory::GetType(packet) == PacketType::JOIN_GAME) {
                 server->setBlocking(false);
                 return std::make_unique<InGame>(std::move(server), PacketFactory::JoinGame(packet));
             } else {
