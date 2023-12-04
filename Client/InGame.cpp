@@ -7,7 +7,7 @@
 #include "ResourceManager.h"
 #include <format>
 
-InGame::InGame(std::unique_ptr<sf::TcpSocket>&& server, int initialTick) : 
+InGame::InGame(std::unique_ptr<ClientNetworking>&& server, int initialTick) :
 world{ std::move(server), initialTick } {
 }
 

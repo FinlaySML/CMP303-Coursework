@@ -3,7 +3,7 @@
 #include <stdexcept>
 #include <format>
 
-World::World(unsigned short port, int startingTick) : tickClock{60, startingTick}, udp{port} {
+World::World(int startingTick) : tickClock{60, startingTick} {
 }
 
 void World::AddEntity(Entity* entity) {

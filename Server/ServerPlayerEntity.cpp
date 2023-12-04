@@ -8,7 +8,7 @@ ServerPlayerEntity::ServerPlayerEntity(ConnectedClient* client, EntityID id, sf:
 
 ServerPlayerEntity::~ServerPlayerEntity() {
 	if(client->player){
-		client->socket.Send(PacketFactory::PlayerSetClientID(std::nullopt));
+		client->Send(PacketFactory::PlayerSetClientID(std::nullopt));
 		client->player = nullptr;
 	}
 }

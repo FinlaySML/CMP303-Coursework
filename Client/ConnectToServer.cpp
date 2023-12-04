@@ -5,7 +5,10 @@
 #include "PacketFactory.h"
 #include "InGame.h"
 
-ConnectToServer::ConnectToServer() : header{ "Enter the server address:", ResourceManager::GetInstance().arial, 24}, inputField{"", ResourceManager::GetInstance().arial, 24} {
+ConnectToServer::ConnectToServer() : 
+header{ "Enter the server address:", ResourceManager::GetInstance().arial, 24}, 
+inputField{"", ResourceManager::GetInstance().arial, 24},
+server{nullptr} {
     inputField.setPosition({ 0, 24 });
 }
 
@@ -26,15 +29,21 @@ bool ConnectToServer::EditText(sf::Text& text, sf::Uint32 unicode) {
 }
 
 void ConnectToServer::ProcessEvent(const sf::Event& event) {
-    if (event.type == sf::Event::TextEntered) {
+    if (server.get() == nullptr && event.type == sf::Event::TextEntered) {
         if (EditText(inputField, event.text.unicode)) {
-            serverAddress = inputField.getString().toAnsiString();
+            sf::IpAddress ip{ inputField.getString().toAnsiString() };
+            if(ip == sf::IpAddress::None) {
+                header.setString("Invalid address, try again:");
+                inputField.setString("");
+            }else{
+                server = std::make_unique<ClientNetworking>(ip, DEFAULT_PORT, 2.0f);
+            }
         }
     }
 }
 
 void ConnectToServer::Update(sf::RenderWindow& window) {
-    if (serverAddress != sf::IpAddress::None) {
+    if (server.get()) {
         header.setString("Attempting to connect...");
     }
 }
@@ -46,22 +55,21 @@ void ConnectToServer::Render(sf::RenderWindow& window) {
 }
 
 std::optional<std::unique_ptr<ClientState>> ConnectToServer::ChangeState() {
-    std::unique_ptr<sf::TcpSocket> server{ std::make_unique<sf::TcpSocket>() };
-    if (serverAddress != sf::IpAddress::None) {
-        if (server->connect(serverAddress, DEFAULT_PORT, sf::seconds(2.0f)) == sf::Socket::Done) {
-            sf::Packet packet;
-            server->receive(packet);
-            if (PacketFactory::GetType(packet) == PacketType::JOIN_GAME) {
-                server->setBlocking(false);
-                return std::make_unique<InGame>(std::move(server), PacketFactory::JoinGame(packet));
-            } else {
-                header.setString("Server did not send the correct packet, try again:");
+    if (server.get()) {
+        if(server->Init()) {
+            if(server->GetStatus() == ClientNetworking::Status::CONNECTED) {
+                sf::Packet& packet{server->GetFirstPacket()};
+                if (PacketFactory::GetType(packet) == PacketType::JOIN_GAME) {
+                    return std::make_unique<InGame>(std::move(server), PacketFactory::JoinGame(packet));
+                } else {
+                    header.setString("Server did not send the correct packet, try again:");
+                }
+            }else{
+                header.setString("Failed to connect, try again:");
             }
-        } else {
-            header.setString("Failed to connect, try again:");
+            server.reset();
+            inputField.setString("");
         }
-        serverAddress = sf::IpAddress::None;
-        inputField.setString("");
     }
     return {};
 }

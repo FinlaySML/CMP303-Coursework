@@ -135,8 +135,6 @@
   <ItemGroup>
     <ClInclude Include="BarrierEntity.h" />
     <ClInclude Include="BulletHoleEntity.h" />
-    <ClInclude Include="ConnectedSocket.h" />
-    <ClInclude Include="ConnectedUDP.h" />
     <ClInclude Include="Entity.h" />
     <ClInclude Include="PacketFactory.h" />
     <ClInclude Include="PlayerEntity.h" />
@@ -146,8 +144,6 @@
   <ItemGroup>
     <ClCompile Include="BarrierEntity.cpp" />
     <ClCompile Include="BulletHoleEntity.cpp" />
-    <ClCompile Include="ConnectedSocket.cpp" />
-    <ClCompile Include="ConnectedUDP.cpp" />
     <ClCompile Include="Entity.cpp" />
     <ClCompile Include="PacketFactory.cpp" />
     <ClCompile Include="PlayerEntity.cpp" />

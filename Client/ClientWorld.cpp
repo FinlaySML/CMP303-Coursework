@@ -3,13 +3,14 @@
 #include "ClientBarrierEntity.h"
 #include "ClientBulletHoleEntity.h"
 #include "ResourceManager.h"
-#include <format>
 #include <SFML/Graphics/Text.hpp>
 #include <SFML/Graphics/Sprite.hpp>
+#include <format>
 #include <algorithm>
+#include <iostream>
 
-ClientWorld::ClientWorld(std::unique_ptr<sf::TcpSocket>&& server, int initialTick) : World(server->getRemotePort(), initialTick),
-server { std::move(server), &udp } {
+ClientWorld::ClientWorld(std::unique_ptr<ClientNetworking>&& server, int initialTick) : World(initialTick),
+server { std::move(server) } {
 }
 
 void ClientWorld::Update(sf::RenderWindow& window) {
@@ -18,7 +19,7 @@ void ClientWorld::Update(sf::RenderWindow& window) {
     //Tick
     tickClock.ExecuteTick([&]() {
         //Receive Packets
-        server.ProcessPackets([&](sf::Packet& packet) {
+        server->ProcessPackets([&](sf::Packet& packet) {
             PacketType type{ PacketFactory::GetType(packet) };
             if(type == PacketType::ENTITY_CREATE) {
                 Entity* entity{ CreateFromPacket(packet)};
@@ -30,7 +31,9 @@ void ClientWorld::Update(sf::RenderWindow& window) {
                 EntityID id;
                 packet >> id;
                 if(id != localPlayer) {
-                    GetEntity(id)->UpdateFromPacket(packet);
+                    if(auto entity = TryGetEntity(id)) {
+                        (*entity)->UpdateFromPacket(packet);
+                    }
                 }
             }
             if(type == PacketType::ENTITY_DELETE) {
@@ -54,19 +57,9 @@ void ClientWorld::Update(sf::RenderWindow& window) {
                 std::cout << message << std::endl;
             }
         });
-        udp.ProcessPackets([&](sf::Packet& packet, sf::IpAddress& ip) {
-            PacketType type{ PacketFactory::GetType(packet) };
-            if (type == PacketType::ENTITY_UPDATE) {
-                EntityID id;
-                packet >> id;
-                if (id != localPlayer) {
-                    GetEntity(id)->UpdateFromPacket(packet);
-                }
-            }
-        });
         //Local Player Update
-        if(localPlayer && TryGetEntity(localPlayer.value())){
-            ClientPlayerEntity* player{(ClientPlayerEntity*)GetEntity(localPlayer.value(), EntityType::PLAYER)};
+        if(localPlayer && TryGetEntity(*localPlayer)){
+            ClientPlayerEntity* player{(ClientPlayerEntity*)GetEntity(*localPlayer, EntityType::PLAYER)};
             PlayerEntity::InputData inputData;
             inputData.target = lastMousePosition;
             if (window.hasFocus()) {
@@ -75,12 +68,12 @@ void ClientWorld::Update(sf::RenderWindow& window) {
             }
             player->UpdateWithInput(tickClock.GetTickDelta(), inputData);
             player->Collision(this);
-            server.Send(PacketFactory::PlayerInput(inputData));
+            server->Send(PacketFactory::PlayerInput(inputData));
             if (window.hasFocus()) {
                 ClientPlayerEntity::ShootData shootData{ player->UpdateShoot(this) };
                 if (shootData.fired) {
                     sf::Packet shootPacket{ PacketFactory::PlayerShoot(tickClock.GetTick()) };
-                    server.Send(shootPacket);
+                    server->Send(shootPacket);
                     ResourceManager::GetInstance().minigunSound.play();
                 }
             }
@@ -134,7 +127,7 @@ Entity* ClientWorld::CreateFromPacket(sf::Packet& packet) {
 }
 
 bool ClientWorld::Disconnected() const {
-    return !server.IsConnected();
+    return server->GetStatus() == ClientNetworking::Status::DISCONNECTED;
 }
 
 std::optional<EntityID> ClientWorld::GetLocalPlayer() const {

@@ -6,13 +6,7 @@
 #include "BarrierEntity.h"
 #include "BulletHoleEntity.h"
 
-ServerWorld::ServerWorld(unsigned short port) : World(port), usedEntityIds{0}, usedClientIds{0}, listening{false} {
-    listener.setBlocking(false);
-    if (listener.listen(DEFAULT_PORT) == sf::Socket::Error) {
-        std::cout << "Failed to listen to port " << DEFAULT_PORT << std::endl;
-    }else{
-        listening = true;
-    }
+ServerWorld::ServerWorld(unsigned short port) : usedEntityIds{0}, networking{port} {
     for (int i = 0; i < 16; i++) {
         AddEntity(new BarrierEntity(GetNewEntityID(), sf::Vector2f(i - 8, -6)));
         AddEntity(new BarrierEntity(GetNewEntityID(), sf::Vector2f(i - 8, 5)));
@@ -36,29 +30,6 @@ EntityID ServerWorld::GetNewEntityID() {
     return usedEntityIds;
 }
 
-ClientID ServerWorld::GetNewClientID() {
-    usedClientIds++;
-    return usedClientIds;
-}
-
-void ServerWorld::Broadcast(sf::Packet&& packet, ClientID excluding, bool reliable) {
-    sf::Packet p{packet};
-    Broadcast(p, excluding, reliable);
-}
-
-void ServerWorld::Broadcast(const std::string& message, ClientID excluding, bool reliable) {
-    sf::Packet joinMessage{ PacketFactory::Message(message) };
-    Broadcast(joinMessage, excluding, reliable);
-    std::cout << message << std::endl;
-}
-
-void ServerWorld::Broadcast(sf::Packet& packet, ClientID excluding, bool reliable) {
-    for (auto& client : clients) {
-        if(excluding == client->id) continue;
-        client->socket.Send(packet, reliable);
-    }
-}
-
 void ServerWorld::Update() {
     bool executedTick = tickClock.ExecuteTick([&]() {
         Tick();
@@ -70,81 +41,70 @@ void ServerWorld::Update() {
 
 void ServerWorld::Tick() {
     //Connect clients
-    if (ConnectedSocket socket{listener, &udp}; socket.IsConnected()) {
-        ConnectedClient* newClient{ new ConnectedClient(std::move(socket), GetNewClientID()) };
-        clients.emplace_back(newClient);
+    if (auto newClient = networking.GetNewClient()) {
         ServerPlayerEntity* newPlayer{ new ServerPlayerEntity(newClient, GetNewEntityID(), {0.0f, 0.0f}, 0.0f)};
         AddEntity(newPlayer);
-        Broadcast(newPlayer->CreationPacket(), newClient->id);
-        newClient->socket.Send(PacketFactory::JoinGame(tickClock.GetTick()));
+        networking.Broadcast(newPlayer->CreationPacket(), newClient->id);
+        newClient->Send(PacketFactory::JoinGame(tickClock.GetTick()));
         for (auto& [id, entity] : entities) {
-            newClient->socket.Send(entity->CreationPacket());
+            newClient->Send(entity->CreationPacket());
         }
-        newClient->socket.Send(PacketFactory::PlayerSetClientID(newPlayer->GetID()));
-        Broadcast(std::format("A player (ID={}) has joined the game", newClient->id));
+        newClient->Send(PacketFactory::PlayerSetClientID(newPlayer->GetID()));
+        networking.Broadcast(std::format("A player (ID={}) has joined the game", newClient->id));
     }
     // Recieve Packets
-    for (auto& client : clients) {
-        client->socket.ProcessPackets([&](sf::Packet& packet) {
-            PacketType type{ PacketFactory::GetType(packet) };
-            if (type == PacketType::PLAYER_INPUT) {
-                if (client->player) {
-                    PlayerEntity::InputData data = PacketFactory::PlayerInput(packet);
-                    client->player->UpdateWithInput(tickClock.GetTickDelta(), data);
-                    client->player->Collision(this);
+    networking.ProcessPackets([&](sf::Packet& packet, ConnectedClient* client){
+        PacketType type{ PacketFactory::GetType(packet) };
+        if (type == PacketType::PLAYER_INPUT) {
+            if (client->player) {
+                PlayerEntity::InputData data = PacketFactory::PlayerInput(packet);
+                client->player->UpdateWithInput(tickClock.GetTickDelta(), data);
+                client->player->Collision(this);
+            }
+        }
+        if (type == PacketType::PLAYER_SHOOT) {
+            if (client->player) {
+                std::optional<sf::Vector2f> shootReturn{ client->player->Shoot(this) };
+                sf::Packet gunEffectsPacket{ PacketFactory::GunEffects() };
+                networking.Broadcast(gunEffectsPacket, client->id);//Client already played the sound on their end so they should be excluded
+                if (shootReturn) {
+                    BulletHoleEntity* bulletHole = new BulletHoleEntity(GetNewEntityID(), shootReturn.value(), 0, tickClock.GetTick(), 1200);
+                    AddEntity(bulletHole);
+                    networking.Broadcast(bulletHole->CreationPacket());
                 }
             }
-            if (type == PacketType::PLAYER_SHOOT) {
-                if (client->player) {
-                    std::optional<sf::Vector2f> shootReturn{ client->player->Shoot(this) };
-                    sf::Packet gunEffectsPacket{PacketFactory::GunEffects()};
-                    Broadcast(gunEffectsPacket, client->id);//Client already played the sound on their end so they should be excluded
-                    if(shootReturn) {
-                        BulletHoleEntity* bulletHole = new BulletHoleEntity(GetNewEntityID(), shootReturn.value(), 0, tickClock.GetTick(), 1200);
-                        AddEntity(bulletHole);
-                        Broadcast(bulletHole->CreationPacket());
-                    }
-                }
-            }
-        });
-    }
+        }
+    });
     //Update Entities
     for (auto& [id, entity] : entities) {
         entity->Update(this);
     }
-    for(auto& client : clients) {
-        if(!client->socket.IsConnected() && client->player) {
+    auto disconnected{networking.GetDisconnectedClients()};
+    for(auto& client : disconnected) {
+        if(client->player) {
             client->player->Kill();
         }
     }
     //Clear entities
     for (auto& [id, entity] : entities) {
         if (entity->ShouldRemove()) {
-            Broadcast(PacketFactory::EntityDelete(id));
+            networking.Broadcast(PacketFactory::EntityDelete(id));
         }
     }
     CleanEntities();
     //Clear clients
-    std::erase_if(clients, [&](const auto& client) {
-        bool erase{ !client->socket.IsConnected() };
-        if(erase) {
-            Broadcast(std::format("A player (ID={}) has left the game", client->id));
-        }
-        return erase;
-    });
+    for (auto& client : disconnected) {
+        networking.Broadcast(std::format("A player (ID={}) has left the game", client->id));
+    }
     // Send Player Update Packets
     for (auto& [id, entity] : entities) {
         if (entity->GetType() == EntityType::PLAYER) {
-            Broadcast(entity->UpdatePacket(), 0, false);
+            networking.Broadcast(entity->UpdatePacket(), 0, false);
         }
     }
 }
 
 void ServerWorld::DamagePlayer(ServerPlayerEntity* target, ServerPlayerEntity* source, int amount) {
     target->Damage(amount);
-    Broadcast(PacketFactory::PlayerDamage(target->GetID(), amount));
-}
-
-bool ServerWorld::Listening() const {
-    return listening;
+    networking.Broadcast(PacketFactory::PlayerDamage(target->GetID(), amount));
 }

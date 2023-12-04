@@ -137,6 +137,7 @@
     <ClCompile Include="Client.cpp" />
     <ClCompile Include="ClientBarrierEntity.cpp" />
     <ClCompile Include="ClientBulletHoleEntity.cpp" />
+    <ClCompile Include="ClientNetworking.cpp" />
     <ClCompile Include="ClientPlayerEntity.cpp" />
     <ClCompile Include="ClientState.cpp" />
     <ClCompile Include="ClientWorld.cpp" />
@@ -147,6 +148,7 @@
   <ItemGroup>
     <ClInclude Include="ClientBarrierEntity.h" />
     <ClInclude Include="ClientBulletHoleEntity.h" />
+    <ClInclude Include="ClientNetworking.h" />
     <ClInclude Include="ClientPlayerEntity.h" />
     <ClInclude Include="ClientState.h" />
     <ClInclude Include="ClientWorld.h" />

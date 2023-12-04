@@ -6,11 +6,10 @@
 #include <memory>
 #include "Entity.h"
 #include "TickClock.h"
-#include "ConnectedUDP.h"
 
 class World {
 public:
-	World(unsigned short port, int startingTick = 0);
+	World(int startingTick = 0);
 	void AddEntity(Entity* entity);
 	void RemoveEntity(EntityID entity);
 	Entity* GetEntity(EntityID id, EntityType type = EntityType::UNKNOWN);
@@ -30,6 +29,5 @@ protected:
 	void CleanEntities();
 	TickClock tickClock;
 	std::unordered_map<EntityID, std::unique_ptr<Entity>> entities;
-	ConnectedUDP udp;
 };
 
