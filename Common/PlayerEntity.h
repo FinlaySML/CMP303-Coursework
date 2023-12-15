@@ -13,9 +13,11 @@ public:
 	virtual void Update(sf::Vector2f position, float rotation);
 	void UpdateWithInput(float deltaTime, InputData inputData);
 	void Collision(World* world);
-	void Damage(int amount);
+	void Damage(EntityID source, int amount);
 	std::optional<sf::FloatRect> GetCollisionBox() const override;
 	int GetHealth() const;
+	EntityID GetCauseOfDeath() const;
 protected:
 	int health;
+	EntityID causeOfDeath;
 };

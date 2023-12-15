@@ -7,8 +7,8 @@
 #include "ResourceManager.h"
 #include <format>
 
-InGame::InGame(std::unique_ptr<ClientNetworking>&& server, int initialTick) :
-world{ std::move(server), initialTick } {
+InGame::InGame(std::unique_ptr<ClientNetworking>&& server) :
+world{ std::move(server) } {
 }
 
 void InGame::ProcessEvent(const sf::Event& event) {

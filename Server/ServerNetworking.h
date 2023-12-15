@@ -18,6 +18,7 @@ public:
 	void ProcessPackets(std::function<void(sf::Packet&, ConnectedClient*)> func);
 	void Broadcast(sf::Packet packet, ClientID excluding = 0, bool reliable = true);
 	void Broadcast(const std::string& message);
+	std::vector<ConnectedClient*> UpdateRespawnTimer(float dt);
 private:
 	ClientID GetNewClientID();
 };

@@ -5,6 +5,9 @@
 #include <format>
 #include "BarrierEntity.h"
 #include "BulletHoleEntity.h"
+#include <cassert>
+
+const float CLIENT_UPDATE_DELTA = 0.1f;
 
 ServerWorld::ServerWorld(unsigned short port) : usedEntityIds{0}, networking{port} {
     for (int i = 0; i < 16; i++) {
@@ -40,21 +43,21 @@ void ServerWorld::Update() {
 }
 
 void ServerWorld::Tick() {
-    //Connect clients
-    if (auto newClient = networking.GetNewClient()) {
-        ServerPlayerEntity* newPlayer{ new ServerPlayerEntity(newClient, GetNewEntityID(), {0.0f, 0.0f}, 0.0f)};
-        AddEntity(newPlayer);
-        networking.Broadcast(newPlayer->CreationPacket(), newClient->id);
-        newClient->Send(PacketFactory::JoinGame(tickClock.GetTick()));
-        for (auto& [id, entity] : entities) {
-            newClient->Send(entity->CreationPacket());
-        }
-        newClient->Send(PacketFactory::PlayerSetClientID(newPlayer->GetID()));
-        networking.Broadcast(std::format("A player (ID={}) has joined the game", newClient->id));
+    //Update clients
+    auto dueRespawn = networking.UpdateRespawnTimer(tickClock.GetTickDelta());
+    for(ConnectedClient* client : dueRespawn) {
+        SpawnPlayer(client);
     }
+    //Connect clients
+    networking.GetNewClient();
     // Recieve Packets
+    std::vector<ConnectedClient*> clientsToInit;
     networking.ProcessPackets([&](sf::Packet& packet, ConnectedClient* client){
         PacketType type{ PacketFactory::GetType(packet) };
+        if (type == PacketType::PING) {
+            client->Send(PacketFactory::Pong(tickClock.GetTick()));
+            clientsToInit.push_back(client);
+        }
         if (type == PacketType::PLAYER_INPUT) {
             if (client->player) {
                 PlayerEntity::InputData data = PacketFactory::PlayerInput(packet);
@@ -75,6 +78,17 @@ void ServerWorld::Tick() {
             }
         }
     });
+    for(auto* newClient : clientsToInit) {
+        if(newClient->GetStatus() == ConnectedClient::Status::LOADING) {
+            //Join game
+            for (auto& [id, entity] : entities) {
+                newClient->Send(entity->CreationPacket());
+            }
+            networking.Broadcast(std::format("A player (ID={}) has joined the game", newClient->id));
+            //Spawn player
+            SpawnPlayer(newClient);
+        }
+    }
     //Update Entities
     for (auto& [id, entity] : entities) {
         entity->Update(this);
@@ -89,6 +103,14 @@ void ServerWorld::Tick() {
     for (auto& [id, entity] : entities) {
         if (entity->ShouldRemove()) {
             networking.Broadcast(PacketFactory::EntityDelete(id));
+            if(entity->GetType() == EntityType::PLAYER) {
+                auto* serverPlayer{(ServerPlayerEntity*)entity.get()};
+                serverPlayer->client->IncrementStat(Stats::Type::DEATHS);
+                serverPlayer->client->SetRespawning(10.0f);
+                if(auto cause = TryGetEntity(serverPlayer->GetCauseOfDeath(), EntityType::PLAYER)) {
+                    ((ServerPlayerEntity*)cause.value())->client->IncrementStat(Stats::Type::KILLS);
+                }
+            }
         }
     }
     CleanEntities();
@@ -96,15 +118,30 @@ void ServerWorld::Tick() {
     for (auto& client : disconnected) {
         networking.Broadcast(std::format("A player (ID={}) has left the game", client->id));
     }
-    // Send Player Update Packets
-    for (auto& [id, entity] : entities) {
-        if (entity->GetType() == EntityType::PLAYER) {
-            networking.Broadcast(entity->UpdatePacket(), 0, false);
+    clientUpdateAccumulator += tickClock.GetTickDelta();
+    if(clientUpdateAccumulator > CLIENT_UPDATE_DELTA) {
+        clientUpdateAccumulator -= CLIENT_UPDATE_DELTA;
+        // Send the status of the client (respawning, playing, or loading)
+        networking.Broadcast(PacketFactory::None());
+        // Send Player Update Packets
+        for (auto& [id, entity] : entities) {
+            if (entity->GetType() == EntityType::PLAYER) {
+                networking.Broadcast(entity->UpdatePacket(), 0, false);
+            }
         }
     }
 }
 
 void ServerWorld::DamagePlayer(ServerPlayerEntity* target, ServerPlayerEntity* source, int amount) {
-    target->Damage(amount);
+    target->Damage(source->GetID(), amount);
     networking.Broadcast(PacketFactory::PlayerDamage(target->GetID(), amount));
+}
+
+void ServerWorld::SpawnPlayer(ConnectedClient* client) {
+    //Create entity
+    ServerPlayerEntity* newPlayer{ new ServerPlayerEntity(client, GetNewEntityID(), {0.0f, 0.0f}, 0.0f) };
+    AddEntity(newPlayer);
+    networking.Broadcast(newPlayer->CreationPacket());
+    //Send update packeet
+    client->SetPlaying(newPlayer);
 }

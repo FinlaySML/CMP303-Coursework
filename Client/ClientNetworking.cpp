@@ -1,9 +1,12 @@
 #include "ClientNetworking.h"
 #include <iostream>
+#include "PacketFactory.h"
 
 ClientNetworking::ClientNetworking(sf::IpAddress serverIp, unsigned short serverPort, float waitTime) : 
 	pending{std::async(std::launch::async, &sf::TcpSocket::connect, &tcp, serverIp, serverPort, sf::seconds(waitTime))},
-	status{Status::PENDING_CONNECT} {
+	status{Status::PENDING_CONNECT},
+	ping{0},
+	serverTick{0} {
 }
 
 bool ClientNetworking::Init() {
@@ -13,8 +16,10 @@ bool ClientNetworking::Init() {
 				return false;
 			}
 			if (pending.get() == sf::Socket::Done) {
-				status = Status::PENDING_FIRST_PACKET;
+				status = Status::PENDING_PONG;
 				udp.bind(tcp.getLocalPort());
+				Send(PacketFactory::Ping());
+				pingClock.restart();
 				pending = std::async(std::launch::async, [&] { return tcp.receive(firstPacket); });
 				return false;
 			} else {
@@ -22,16 +27,19 @@ bool ClientNetworking::Init() {
 			}
 			break;
 		}
-		case Status::PENDING_FIRST_PACKET:{
+		case Status::PENDING_PONG:{
 			if (pending.wait_for(std::chrono::seconds(0)) != std::future_status::ready) {
 				return false;
 			}
 			tcp.setBlocking(false);
 			udp.setBlocking(false);
-			if (pending.get() == sf::Socket::Done) {
+			if (pending.get() == sf::Socket::Done && PacketFactory::GetType(firstPacket) == PacketType::PONG) {
 				status = Status::CONNECTED;
+				ping = pingClock.restart().asMilliseconds() / 2;
+				serverTick = PacketFactory::Pong(firstPacket);
 				std::cout << "TCP: " << tcp.getLocalPort() << " -> " << tcp.getRemoteAddress() << " " << tcp.getRemotePort() << std::endl;
 				std::cout << "UDP: " << udp.getLocalPort() << std::endl;
+				std::cout << "PING: " << ping << std::endl;
 			} else {
 				status = Status::DISCONNECTED;
 			}
@@ -39,10 +47,6 @@ bool ClientNetworking::Init() {
 		}
 	}
 	return true;
-}
-
-sf::Packet& ClientNetworking::GetFirstPacket() {
-	return firstPacket;
 }
 
 void ClientNetworking::ProcessPackets(std::function<void(sf::Packet&)> func) {
@@ -70,4 +74,12 @@ void ClientNetworking::Send(sf::Packet packet, bool reliable) {
 
 ClientNetworking::Status ClientNetworking::GetStatus() const {
 	return status;
+}
+
+int ClientNetworking::GetPing() const {
+	return ping;
+}
+
+int ClientNetworking::GetServerTick() const {
+	return serverTick;
 }

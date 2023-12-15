@@ -58,12 +58,7 @@ std::optional<std::unique_ptr<ClientState>> ConnectToServer::ChangeState() {
     if (server.get()) {
         if(server->Init()) {
             if(server->GetStatus() == ClientNetworking::Status::CONNECTED) {
-                sf::Packet& packet{server->GetFirstPacket()};
-                if (PacketFactory::GetType(packet) == PacketType::JOIN_GAME) {
-                    return std::make_unique<InGame>(std::move(server), PacketFactory::JoinGame(packet));
-                } else {
-                    header.setString("Server did not send the correct packet, try again:");
-                }
+                return std::make_unique<InGame>(std::move(server));
             }else{
                 header.setString("Failed to connect, try again:");
             }

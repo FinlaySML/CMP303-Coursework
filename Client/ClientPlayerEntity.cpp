@@ -75,7 +75,7 @@ ClientPlayerEntity::ShootData ClientPlayerEntity::UpdateShoot(ClientWorld* world
 }
 
 void ClientPlayerEntity::Damage(int amount) {
-	PlayerEntity::Damage(amount);
+	PlayerEntity::Damage(0, amount);
 	damageReddening = 4;
 }
 

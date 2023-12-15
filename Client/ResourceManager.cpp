@@ -14,7 +14,7 @@ ResourceManager::ResourceManager() {
     bulletHoleDecal.loadFromFile("bullet_hole.png");
     minigunSound.setBuffer(minigunSoundSource);
     minigunSound.setPitch(0.5f);
-    minigunSound.setVolume(30.0f);
+    minigunSound.setVolume(5.0f);
     brickTexture.loadFromFile("brick.png");
     arial.loadFromFile("arial.ttf");
 }

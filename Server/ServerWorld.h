@@ -11,8 +11,10 @@ public:
     void Update();
     EntityID GetNewEntityID();
     void DamagePlayer(ServerPlayerEntity* target, ServerPlayerEntity* source, int amount);
+    void SpawnPlayer(ConnectedClient* client);
 private:
     void Tick();
     ServerNetworking networking;
     EntityID usedEntityIds;
+    float clientUpdateAccumulator;
 };

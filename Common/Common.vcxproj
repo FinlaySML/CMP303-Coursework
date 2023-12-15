@@ -138,6 +138,7 @@
     <ClInclude Include="Entity.h" />
     <ClInclude Include="PacketFactory.h" />
     <ClInclude Include="PlayerEntity.h" />
+    <ClInclude Include="Stats.h" />
     <ClInclude Include="TickClock.h" />
     <ClInclude Include="World.h" />
   </ItemGroup>
@@ -147,6 +148,7 @@
     <ClCompile Include="Entity.cpp" />
     <ClCompile Include="PacketFactory.cpp" />
     <ClCompile Include="PlayerEntity.cpp" />
+    <ClCompile Include="Stats.cpp" />
     <ClCompile Include="TickClock.cpp" />
     <ClCompile Include="World.cpp" />
   </ItemGroup>

@@ -9,7 +9,7 @@
 
 class ClientWorld : public World {
 public:
-	ClientWorld(std::unique_ptr<ClientNetworking>&& server, int initialTick);
+	ClientWorld(std::unique_ptr<ClientNetworking>&& server);
     void Update(sf::RenderWindow& window);
     void Render(sf::RenderWindow& window);
     static Entity* CreateFromPacket(sf::Packet& packet);
@@ -19,5 +19,6 @@ private:
     std::unique_ptr<ClientNetworking> server;
     sf::Vector2f lastMousePosition;
     std::optional<EntityID> localPlayer;
+    float respawnTime;
 };
 

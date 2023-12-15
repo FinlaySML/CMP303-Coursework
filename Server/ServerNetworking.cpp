@@ -2,6 +2,8 @@
 #include "PacketFactory.h"
 #include <iostream>
 #include <limits>
+#include "ServerPlayerEntity.h"
+#include <cassert>
 
 ServerNetworking::ServerNetworking(unsigned short port) : usedClientIds{0} {
     listener.setBlocking(false);
@@ -17,7 +19,7 @@ ClientID ServerNetworking::GetNewClientID() {
 
 ConnectedClient* ServerNetworking::GetNewClient() {
     auto cc{ std::make_unique<ConnectedClient>(listener, &udp)};
-    if(cc->GetStatus() == ConnectedClient::Status::CONNECTED){
+    if(cc->GetStatus() == ConnectedClient::Status::LOADING){
         cc->id = GetNewClientID();
         auto result = clients.insert({cc->id, std::move(cc)});
         return result.first->second.get();
@@ -70,4 +72,18 @@ void ServerNetworking::Broadcast(const std::string& message) {
     sf::Packet joinMessage{ PacketFactory::Message(message) };
     Broadcast(joinMessage);
     std::cout << message << std::endl;
+}
+
+std::vector<ConnectedClient*> ServerNetworking::UpdateRespawnTimer(float dt) {
+    std::vector<ConnectedClient*> due;
+    for(auto& [id, client] : clients) {
+        if(client->GetStatus() == ConnectedClient::Status::RESPAWNING){
+            client->respawnTime -= dt;
+            if(client->respawnTime < 0.0f){
+                client->respawnTime = 0.0f;
+                due.push_back(client.get());
+            }
+        }
+    }
+    return due;
 }

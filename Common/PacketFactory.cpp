@@ -6,17 +6,71 @@ PacketType PacketFactory::GetType(sf::Packet& packet) {
     return (PacketType)type;
 }
 
-sf::Packet PacketFactory::JoinGame(int tick) {
+sf::Packet PacketFactory::Ping() {
     sf::Packet packet;
-    packet << static_cast<PacketTypeUnderlying>(PacketType::JOIN_GAME);
+    packet << static_cast<PacketTypeUnderlying>(PacketType::PING);
+    return packet;
+}
+
+sf::Packet PacketFactory::Pong(int tick) {
+    sf::Packet packet;
+    packet << static_cast<PacketTypeUnderlying>(PacketType::PONG);
     packet << tick;
     return packet;
 }
 
-int PacketFactory::JoinGame(sf::Packet& packet) {
-    int tick;
-    packet >> tick;
-    return tick;
+int PacketFactory::Pong(sf::Packet& packet) {
+    int data;
+    packet >> data;
+    return data;
+}
+
+sf::Packet PacketFactory::ModeRespawning(float respawnTime) {
+    sf::Packet packet;
+    packet << static_cast<PacketTypeUnderlying>(PacketType::MODE_RESPAWNING);
+    packet << respawnTime;
+    return packet;
+}
+
+float PacketFactory::ModeRespawning(sf::Packet& packet) {
+    float respawnTime;
+    packet >> respawnTime;
+    return respawnTime;
+}
+
+sf::Packet PacketFactory::ModePlaying(EntityID playerID) {
+    sf::Packet packet;
+    packet << static_cast<PacketTypeUnderlying>(PacketType::MODE_PLAYING);
+    packet << playerID;
+    return packet;
+}
+
+EntityID PacketFactory::ModePlaying(sf::Packet& packet) {
+    EntityID playerId;
+    packet >> playerId;
+    return playerId;
+}
+
+
+sf::Packet PacketFactory::StatUpdate(Stats::Type type, int value) {
+    sf::Packet packet;
+    packet << static_cast<PacketTypeUnderlying>(PacketType::STAT_UPDATE);
+    packet << (Stats::TypeUnderlying)type;
+    packet << value;
+    return packet;
+}
+
+PacketFactory::StatUpdateData PacketFactory::StatUpdate(sf::Packet& packet) {
+    StatUpdateData data{};
+    packet >> (Stats::TypeUnderlying&)data.type;
+    packet >> data.value;
+    return data;
+}
+
+sf::Packet PacketFactory::None() {
+    sf::Packet packet;
+    packet << static_cast<PacketTypeUnderlying>(PacketType::NONE);
+    return packet;
 }
 
 sf::Packet PacketFactory::EntityDelete(EntityID id) {
@@ -30,29 +84,6 @@ EntityID PacketFactory::EntityDelete(sf::Packet& packet) {
     EntityID id;
     packet >> id;
     return id;
-}
-
-sf::Packet PacketFactory::PlayerSetClientID(std::optional<EntityID> entityId) {
-    sf::Packet packet;
-    packet << static_cast<PacketTypeUnderlying>(PacketType::PLAYER_SET_CLIENT);
-    bool hasValue{entityId.has_value()};
-    packet << hasValue;
-    if(hasValue) {
-        packet << entityId.value();
-    }
-    return packet;
-}
-
-std::optional<EntityID> PacketFactory::PlayerSetClientID(sf::Packet& packet) {
-    bool hasValue;
-    packet >> hasValue;
-    if(hasValue) {
-        EntityID id;
-        packet >> id;
-        return id;
-    }else{
-        return {};
-    }
 }
 
 sf::Packet PacketFactory::PlayerInput(PlayerEntity::InputData inputData) {

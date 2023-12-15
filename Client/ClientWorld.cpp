@@ -9,8 +9,9 @@
 #include <algorithm>
 #include <iostream>
 
-ClientWorld::ClientWorld(std::unique_ptr<ClientNetworking>&& server, int initialTick) : World(initialTick),
-server { std::move(server) } {
+ClientWorld::ClientWorld(std::unique_ptr<ClientNetworking>&& server) : World(server->GetServerTick()),
+server { std::move(server) },
+respawnTime{0.0f} {
 }
 
 void ClientWorld::Update(sf::RenderWindow& window) {
@@ -18,9 +19,22 @@ void ClientWorld::Update(sf::RenderWindow& window) {
     window.setView(sf::View{ sf::Vector2f{0, 0}, sf::Vector2f{16, 12} });
     //Tick
     tickClock.ExecuteTick([&]() {
+        respawnTime -= tickClock.GetTickDelta();
+        if(respawnTime < 0.0f) {
+            respawnTime = 0.0f;
+        }
         //Receive Packets
         server->ProcessPackets([&](sf::Packet& packet) {
             PacketType type{ PacketFactory::GetType(packet) };
+            if(type == PacketType::STAT_UPDATE) {
+                PacketFactory::StatUpdateData data{PacketFactory::StatUpdate(packet)};
+                int* stat{server->stats.GetStat(data.type)};
+                *stat = data.value;
+            }
+            if(type == PacketType::MODE_RESPAWNING) {
+                respawnTime = PacketFactory::ModeRespawning(packet);
+                localPlayer = {};
+            }
             if(type == PacketType::ENTITY_CREATE) {
                 Entity* entity{ CreateFromPacket(packet)};
                 if(entity) {
@@ -40,9 +54,9 @@ void ClientWorld::Update(sf::RenderWindow& window) {
                 EntityID id{PacketFactory::EntityDelete(packet)};
                 RemoveEntity(id);
             }
-            if(type == PacketType::PLAYER_SET_CLIENT) {
-                std::optional<EntityID> id{PacketFactory::PlayerSetClientID(packet)};
-                localPlayer = id;
+            if(type == PacketType::MODE_PLAYING) {  
+                localPlayer = PacketFactory::ModePlaying(packet);
+                respawnTime = 0.0f;
             }
             if (type == PacketType::PLAYER_DAMAGE) {
                 auto data{PacketFactory::PlayerDamage(packet)};
@@ -93,11 +107,23 @@ void ClientWorld::Render(sf::RenderWindow& window) {
     }
     //UI
     window.setView(sf::View{ sf::Vector2f{window.getSize()} / 2.0f, sf::Vector2f{window.getSize()} });
-    if(localPlayer) {
-        ClientPlayerEntity* player{ (ClientPlayerEntity*)GetEntity(localPlayer.value(), EntityType::PLAYER) };
-        sf::Text text{ std::format("HP {}", player->GetHealth()), ResourceManager::GetInstance().arial};
+    auto drawString = [&](const std::string& value, sf::Vector2f pos) {
+        sf::Text text{ value, ResourceManager::GetInstance().arial };
+        text.setPosition(pos);
         window.draw(text);
+    };
+    drawString(std::format("PING {} ms", server->GetPing()), {0, 0});
+    if(localPlayer) {
+        auto player = (ClientPlayerEntity*)GetEntity(localPlayer.value(), EntityType::PLAYER);
+        drawString(std::format("HP {}", player->GetHealth()), {0, 24});
+    }else if (respawnTime > 0) {
+        drawString(std::format("RESPAWN {:.1f}", respawnTime), {0, 24});
     }
+    drawString(std::format("KILLS {}", server->stats.kills), { 0, (float)window.getSize().y - 4 * 24 - 8 });
+    drawString(std::format("DEATHS {}", server->stats.deaths), { 0, (float)window.getSize().y - 3 * 24 - 8 });
+    drawString(std::format("HITS {}", server->stats.hits), { 0, (float)window.getSize().y - 2 * 24 - 8 });
+    drawString(std::format("MISSES {}", server->stats.misses), { 0, (float)window.getSize().y - 1 * 24 - 8 });
+
 }
 
 Entity* ClientWorld::CreateFromPacket(sf::Packet& packet) {

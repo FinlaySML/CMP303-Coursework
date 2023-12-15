@@ -6,7 +6,7 @@
 
 class World;
 
-using EntityID = std::uint16_t;
+using EntityID = std::uint32_t;
 using EntityTypeUnderlying = std::uint8_t;
 enum class EntityType : EntityTypeUnderlying {
 	UNKNOWN,

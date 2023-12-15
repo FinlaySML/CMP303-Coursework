@@ -3,7 +3,10 @@
 #include <array>
 #include <ranges>
 
-PlayerEntity::PlayerEntity(EntityID id, sf::Vector2f position, float rotation) : Entity(EntityType::PLAYER, id), health{1000} {
+PlayerEntity::PlayerEntity(EntityID id, sf::Vector2f position, float rotation) : 
+Entity(EntityType::PLAYER, id), 
+health{1000}, 
+causeOfDeath{0} {
 	Update(position, rotation);
 }
 
@@ -62,10 +65,17 @@ int PlayerEntity::GetHealth() const {
     return health;
 }
 
-void PlayerEntity::Damage(int amount) {
-    health -= amount;
-    if(health < 0) {
-        health = 0;
+EntityID PlayerEntity::GetCauseOfDeath() const {
+    return causeOfDeath;
+}
+
+void PlayerEntity::Damage(EntityID source, int amount) {
+    if(health > 0) {
+        health -= amount;
+        if(health <= 0) {
+            causeOfDeath = source;
+            health = 0;
+        }
     }
 }
 
