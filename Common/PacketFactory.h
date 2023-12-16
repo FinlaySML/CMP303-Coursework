@@ -8,25 +8,25 @@ const unsigned short DEFAULT_PORT{29011};
 using PacketTypeUnderlying = std::uint8_t;
 enum class PacketType : PacketTypeUnderlying {
 	//Session
-	NONE,
-	PING,
-	PONG,
+	NONE,//SERVER
+	PING,//CLIENT
+	PONG,//SERVER
+	SET_TICK,//SERVER
 	//MODE
-	MODE_RESPAWNING,
-	MODE_PLAYING,
+	MODE_RESPAWNING,//SERVER
+	MODE_PLAYING,//SERVER
 	//Stat
-	STAT_UPDATE,
+	STAT_UPDATE,//SERVER
 	//Entity
-	ENTITY_CREATE,
-	ENTITY_UPDATE,
-	ENTITY_DELETE,
+	ENTITY_CREATE,//SERVER
+	ENTITY_UPDATE,//SERVER
+	ENTITY_DELETE,//SERVER
 	//Player
-	PLAYER_INPUT,
-	PLAYER_SHOOT,
-	PLAYER_DAMAGE,
+	PLAYER_INPUT,//CLIENT
+	PLAYER_DAMAGE,//SERVER
 	//Other
-	MESSAGE,
-	GUN_EFFECTS
+	MESSAGE,//SERVER
+	GUN_EFFECTS//SERVER
 };
 
 class PacketFactory {
@@ -38,6 +38,9 @@ public:
 	static sf::Packet Ping();
 	static sf::Packet Pong(int tick);
 	static int Pong(sf::Packet& packet);
+	// Set Tick
+	static sf::Packet SetTick(int tick);
+	static int SetTick(sf::Packet& packet);
 	// Mode Respawning
 	static sf::Packet ModeRespawning(float respawnTime);
 	static float ModeRespawning(sf::Packet& packet);
@@ -55,13 +58,8 @@ public:
 	static sf::Packet EntityDelete(EntityID id);
 	static EntityID EntityDelete(sf::Packet& packet);
 	// Send Player Input
-	static sf::Packet PlayerInput(PlayerEntity::InputData inputData);
-	static PlayerEntity::InputData PlayerInput(sf::Packet& packet);
-	// Shoot
-	static sf::Packet PlayerShoot(int tick);
-	static int PlayerShoot(sf::Packet& packet);
-	// Gun Effects
-	static sf::Packet GunEffects();
+	static sf::Packet PlayerInput(const std::vector<PlayerEntity::InputData>& inputData);
+	static std::vector<PlayerEntity::InputData> PlayerInput(sf::Packet& packet);
 	// Damage
 	struct PlayerDamageData {
 		EntityID id;
@@ -72,4 +70,12 @@ public:
 	// Messaging
 	static sf::Packet Message(const std::string& message);
 	static std::string Message(sf::Packet& packet);
+	// Gun sound
+	struct GunEffectsData {
+		EntityID sourceEntity;
+		EntityID hitEntity;
+		sf::Vector2f hitPosition;
+	};
+	static sf::Packet GunEffects(EntityID sourceEntity, EntityID hitEntity, sf::Vector2f hitPosition);
+	static GunEffectsData GunEffects(sf::Packet& packet);
 };

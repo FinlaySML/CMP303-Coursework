@@ -33,6 +33,14 @@ std::optional<Entity*> World::TryGetEntity(EntityID id, EntityType type) {
     return it->second.get();
 }
 
+std::vector<Entity*> World::GetEntities() {
+    std::vector<Entity*> result;
+    for(auto& [id, entity] : entities) {
+        result.push_back(entity.get());
+    }
+    return result;
+}
+
 std::vector<World::IntersectionResult> World::GetIntersecting(Entity* source) {
     auto sourceOptional{ source->GetCollisionBox() };
     if (!sourceOptional) {

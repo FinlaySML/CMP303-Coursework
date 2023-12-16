@@ -60,21 +60,8 @@ void ServerWorld::Tick() {
         }
         if (type == PacketType::PLAYER_INPUT) {
             if (client->player) {
-                PlayerEntity::InputData data = PacketFactory::PlayerInput(packet);
-                client->player->UpdateWithInput(tickClock.GetTickDelta(), data);
-                client->player->Collision(this);
-            }
-        }
-        if (type == PacketType::PLAYER_SHOOT) {
-            if (client->player) {
-                std::optional<sf::Vector2f> shootReturn{ client->player->Shoot(this) };
-                sf::Packet gunEffectsPacket{ PacketFactory::GunEffects() };
-                networking.Broadcast(gunEffectsPacket, client->id);//Client already played the sound on their end so they should be excluded
-                if (shootReturn) {
-                    BulletHoleEntity* bulletHole = new BulletHoleEntity(GetNewEntityID(), shootReturn.value(), 0, tickClock.GetTick(), 1200);
-                    AddEntity(bulletHole);
-                    networking.Broadcast(bulletHole->CreationPacket());
-                }
+                auto data = PacketFactory::PlayerInput(packet);
+                client->player->BufferInput(data);
             }
         }
     });
@@ -82,15 +69,16 @@ void ServerWorld::Tick() {
         if(newClient->GetStatus() == ConnectedClient::Status::LOADING) {
             //Join game
             for (auto& [id, entity] : entities) {
-                newClient->Send(entity->CreationPacket());
+                newClient->Send(entity->CreationPacket(tickClock.GetTick()));
             }
             networking.Broadcast(std::format("A player (ID={}) has joined the game", newClient->id));
             //Spawn player
             SpawnPlayer(newClient);
         }
     }
-    //Update Entities
-    for (auto& [id, entity] : entities) {
+    //Update Entities (can't iterate directly because if an entity is spawned in Update it would invalidate the iterator)
+    auto allEntities{GetEntities()};
+    for (Entity* entity : allEntities) {
         entity->Update(this);
     }
     auto disconnected{networking.GetDisconnectedClients()};
@@ -121,12 +109,14 @@ void ServerWorld::Tick() {
     clientUpdateAccumulator += tickClock.GetTickDelta();
     if(clientUpdateAccumulator > CLIENT_UPDATE_DELTA) {
         clientUpdateAccumulator -= CLIENT_UPDATE_DELTA;
-        // Send the status of the client (respawning, playing, or loading)
+        // Check TCP connection
         networking.Broadcast(PacketFactory::None());
+        // Refresh client clocks
+        networking.Broadcast(PacketFactory::SetTick(tickClock.GetTick()), 0, false);
         // Send Player Update Packets
         for (auto& [id, entity] : entities) {
             if (entity->GetType() == EntityType::PLAYER) {
-                networking.Broadcast(entity->UpdatePacket(), 0, false);
+                networking.Broadcast(entity->UpdatePacket(tickClock.GetTick()), 0, false);
             }
         }
     }
@@ -141,7 +131,26 @@ void ServerWorld::SpawnPlayer(ConnectedClient* client) {
     //Create entity
     ServerPlayerEntity* newPlayer{ new ServerPlayerEntity(client, GetNewEntityID(), {0.0f, 0.0f}, 0.0f) };
     AddEntity(newPlayer);
-    networking.Broadcast(newPlayer->CreationPacket());
+    networking.Broadcast(newPlayer->CreationPacket(tickClock.GetTick()));
     //Send update packeet
     client->SetPlaying(newPlayer);
+}
+
+void ServerWorld::GunEffects(EntityID sourceEntity, EntityID hitEntity, sf::Vector2f hitPosition) {
+    auto source{ TryGetEntity(sourceEntity, EntityType::PLAYER) };
+    auto hit{ TryGetEntity(hitEntity) };
+    if(source && hit) {
+        auto sourcePlayer{(ServerPlayerEntity*)source.value()};
+        if(hit.value()->GetType() == EntityType::PLAYER) {
+            auto hitPlayer{((ServerPlayerEntity*)hit.value())};
+            DamagePlayer(hitPlayer, sourcePlayer, 50);
+            networking.Broadcast(PacketFactory::GunEffects(sourceEntity, hitEntity, hitPosition), sourcePlayer->client->id);
+            sourcePlayer->client->IncrementStat(Stats::Type::HITS);
+        }else{
+            BulletHoleEntity* bulletHole = new BulletHoleEntity(GetNewEntityID(), hitPosition, 0, tickClock.GetTick(), 1200);
+            AddEntity(bulletHole);
+            networking.Broadcast(bulletHole->CreationPacket(tickClock.GetTick()));
+            sourcePlayer->client->IncrementStat(Stats::Type::MISSES);
+        }
+    }
 }

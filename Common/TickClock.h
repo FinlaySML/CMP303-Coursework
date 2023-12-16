@@ -11,6 +11,7 @@ public:
 	TickClock(float ticksPerSecond, int startingTick = 0);
 	float GetTickDelta() const;
 	int GetTick() const;
+	void SetTick(int newTarget);
 	bool ExecuteTick(std::function<void(void)> tickFunction);
 };
 

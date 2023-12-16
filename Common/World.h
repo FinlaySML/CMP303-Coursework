@@ -14,6 +14,7 @@ public:
 	void RemoveEntity(EntityID entity);
 	Entity* GetEntity(EntityID id, EntityType type = EntityType::UNKNOWN);
 	std::optional<Entity*> TryGetEntity(EntityID id, EntityType type = EntityType::UNKNOWN);
+	std::vector<Entity*> GetEntities();
 	struct IntersectionResult {
 		Entity* entity;
 		float overlap;
@@ -24,6 +25,7 @@ public:
 		float distance;
 	};
 	std::vector<RayCastResult> RayCast(Entity* exclude, sf::Vector2f origin, sf::Vector2f direction, float maxDistance = 100.f);
+	virtual void GunEffects(EntityID sourceEntity, EntityID hitEntity, sf::Vector2f hitPosition) = 0;
 	const TickClock& GetClock() const;
 protected:
 	void CleanEntities();

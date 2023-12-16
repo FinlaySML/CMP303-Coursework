@@ -26,8 +26,8 @@ public:
 	virtual void Update(World* world);
 	virtual void Draw(sf::RenderWindow& window, int tick) const;
 	//Networking
-	virtual sf::Packet CreationPacket() const;
-	virtual sf::Packet UpdatePacket() const;
+	virtual sf::Packet CreationPacket(int tick) const;
+	virtual sf::Packet UpdatePacket(int tick) const;
 	virtual void UpdateFromPacket(sf::Packet& packet);
 	//Physics
 	virtual std::optional<sf::FloatRect> GetCollisionBox() const;

@@ -5,13 +5,19 @@
 #include "ResourceManager.h"
 #include <SFML/Graphics/Text.hpp>
 #include <SFML/Graphics/Sprite.hpp>
+#include <SFML/Window/Keyboard.hpp>
+#include <SFML/Window/Mouse.hpp>
 #include <format>
 #include <algorithm>
 #include <iostream>
+#include <cassert>
+
+const int MAX_INPUT_BUFFER_SIZE{4};
 
 ClientWorld::ClientWorld(std::unique_ptr<ClientNetworking>&& server) : World(server->GetServerTick()),
 server { std::move(server) },
-respawnTime{0.0f} {
+respawnTime{0.0f},
+inputIndex{0} {
 }
 
 void ClientWorld::Update(sf::RenderWindow& window) {
@@ -64,33 +70,29 @@ void ClientWorld::Update(sf::RenderWindow& window) {
                 ((ClientPlayerEntity*)entity)->Damage(data.amount);
             }
             if (type == PacketType::GUN_EFFECTS) {
-                ResourceManager::GetInstance().minigunSound.play();
+                auto data(PacketFactory::GunEffects(packet));
+                GunEffects(data.sourceEntity, data.hitEntity, data.hitPosition);
             }
             if (type == PacketType::MESSAGE) {
                 std::string message = PacketFactory::Message(packet);
                 std::cout << message << std::endl;
             }
+            if (type == PacketType::SET_TICK) {
+                tickClock.SetTick(PacketFactory::SetTick(packet));
+            }
         });
         //Local Player Update
-        if(localPlayer && TryGetEntity(*localPlayer)){
-            ClientPlayerEntity* player{(ClientPlayerEntity*)GetEntity(*localPlayer, EntityType::PLAYER)};
-            PlayerEntity::InputData inputData;
-            inputData.target = lastMousePosition;
-            if (window.hasFocus()) {
-                inputData = player->GetInputData(window);
-                lastMousePosition = inputData.target;
+        if(auto playerOpt = TryGetEntity(localPlayer.value_or(0), EntityType::PLAYER)) {
+            //Get input
+            inputBuffer.push_back(GetInputData(window));
+            if(inputBuffer.size() > MAX_INPUT_BUFFER_SIZE) {
+                inputBuffer.erase(inputBuffer.begin());
             }
-            player->UpdateWithInput(tickClock.GetTickDelta(), inputData);
-            player->Collision(this);
-            server->Send(PacketFactory::PlayerInput(inputData));
-            if (window.hasFocus()) {
-                ClientPlayerEntity::ShootData shootData{ player->UpdateShoot(this) };
-                if (shootData.fired) {
-                    sf::Packet shootPacket{ PacketFactory::PlayerShoot(tickClock.GetTick()) };
-                    server->Send(shootPacket);
-                    ResourceManager::GetInstance().minigunSound.play();
-                }
-            }
+            assert(inputBuffer.size() <= MAX_INPUT_BUFFER_SIZE);
+            //Update with input
+            ClientPlayerEntity* player{ (ClientPlayerEntity*)playerOpt.value() };
+            player->UpdateFromInput(this, inputBuffer.back());
+            server->Send(PacketFactory::PlayerInput(inputBuffer));
         }
         for(auto& [id, entity] : entities) {
             entity->Update(this);
@@ -123,21 +125,44 @@ void ClientWorld::Render(sf::RenderWindow& window) {
     drawString(std::format("DEATHS {}", server->stats.deaths), { 0, (float)window.getSize().y - 3 * 24 - 8 });
     drawString(std::format("HITS {}", server->stats.hits), { 0, (float)window.getSize().y - 2 * 24 - 8 });
     drawString(std::format("MISSES {}", server->stats.misses), { 0, (float)window.getSize().y - 1 * 24 - 8 });
+}
 
+void ClientWorld::GunEffects(EntityID sourceEntity, EntityID hitEntity, sf::Vector2f hitPosition) {
+    ResourceManager::GetInstance().minigunSound.play();
+}
+
+PlayerEntity::InputData ClientWorld::GetInputData(sf::RenderWindow& window) {
+    inputIndex++;
+    PlayerEntity::InputData inputData{};
+    inputData.index = inputIndex;
+    if (window.hasFocus()) {
+        inputData.w = sf::Keyboard::isKeyPressed(sf::Keyboard::W);
+        inputData.a = sf::Keyboard::isKeyPressed(sf::Keyboard::A);
+        inputData.s = sf::Keyboard::isKeyPressed(sf::Keyboard::S);
+        inputData.d = sf::Keyboard::isKeyPressed(sf::Keyboard::D);
+        inputData.leftMouse = sf::Mouse::isButtonPressed(sf::Mouse::Left);
+        inputData.rightMouse = sf::Mouse::isButtonPressed(sf::Mouse::Right);
+        inputData.target = window.mapPixelToCoords(sf::Mouse::getPosition(window));
+    } else if(inputBuffer.size() > 0) {
+        inputData.target = inputBuffer.back().target;
+    }
+    return inputData;
 }
 
 Entity* ClientWorld::CreateFromPacket(sf::Packet& packet) {
     //Packet type should already be consumed
     EntityType type;
     EntityID id;
+    int tick;
     sf::Vector2f position;
     float rotation;
     packet >> (EntityTypeUnderlying&)type;
     packet >> id;
+    packet >> tick;
     packet >> position.x >> position.y;
     packet >> rotation;
     if (type == EntityType::PLAYER) {
-        return new ClientPlayerEntity(id, position, rotation);
+        return new ClientPlayerEntity(id, tick, position, rotation);
     }
     if (type == EntityType::BARRIER) {
         return new ClientBarrierEntity(id, position);

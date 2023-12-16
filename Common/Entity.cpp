@@ -36,28 +36,33 @@ void Entity::Update(World* world) {
 
 void Entity::Draw(sf::RenderWindow& window, int tick) const {}
 
-sf::Packet Entity::CreationPacket() const {
+sf::Packet Entity::CreationPacket(int tick) const {
 	sf::Packet packet;
 	packet << static_cast<PacketTypeUnderlying>(PacketType::ENTITY_CREATE);
 	packet << static_cast<EntityTypeUnderlying>(type);
 	packet << id;
+	packet << tick;
 	packet << getPosition().x << getPosition().y;
 	packet << getRotation();
 	return packet;
 }
 
-sf::Packet Entity::UpdatePacket() const {
+sf::Packet Entity::UpdatePacket(int tick) const {
 	sf::Packet packet;
 	packet << static_cast<PacketTypeUnderlying>(PacketType::ENTITY_UPDATE);
 	packet << id;
+	packet << tick;
 	packet << getPosition().x << getPosition().y;
 	packet << getRotation();
 	return packet;
 }
 
 void Entity::UpdateFromPacket(sf::Packet& packet) {
+	int tick;
 	float x, y, r;
-	packet >> x >> y >> r;
+	packet >> tick;
+	packet >> x >> y;
+	packet >> r;
 	setPosition({x, y});
 	setRotation(r);
 }

@@ -7,8 +7,8 @@ creationTick{creationTick},
 despawnTime{despawnTime},
 color{color} {}
 
-sf::Packet BulletHoleEntity::CreationPacket() const {
-	sf::Packet packet{Entity::CreationPacket()};
+sf::Packet BulletHoleEntity::CreationPacket(int tick) const {
+	sf::Packet packet{Entity::CreationPacket(tick)};
 	packet << creationTick;
 	packet << despawnTime;
 	packet << color.r << color.g << color.b << color.a;

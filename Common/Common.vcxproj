@@ -136,6 +136,7 @@
     <ClInclude Include="BarrierEntity.h" />
     <ClInclude Include="BulletHoleEntity.h" />
     <ClInclude Include="Entity.h" />
+    <ClInclude Include="Interpolator.h" />
     <ClInclude Include="PacketFactory.h" />
     <ClInclude Include="PlayerEntity.h" />
     <ClInclude Include="Stats.h" />
@@ -146,6 +147,7 @@
     <ClCompile Include="BarrierEntity.cpp" />
     <ClCompile Include="BulletHoleEntity.cpp" />
     <ClCompile Include="Entity.cpp" />
+    <ClCompile Include="Interpolator.cpp" />
     <ClCompile Include="PacketFactory.cpp" />
     <ClCompile Include="PlayerEntity.cpp" />
     <ClCompile Include="Stats.cpp" />
