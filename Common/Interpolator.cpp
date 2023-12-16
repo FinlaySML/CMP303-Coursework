@@ -33,6 +33,18 @@ Interpolator::Keyframe Interpolator::GetKeyframe() {
 	Keyframe result{};
 	result.position.x = Lerp(t, keyframes[0].position.x, keyframes[1].position.x);
 	result.position.y = Lerp(t, keyframes[0].position.y, keyframes[1].position.y);
-	result.rotation = Lerp(t, keyframes[0].rotation, keyframes[1].rotation);
+	float rotDiff = keyframes[1].rotation - keyframes[0].rotation;
+	if(rotDiff > 180) {
+		rotDiff -= 360;
+	} else if(rotDiff < -180) {
+		rotDiff += 360;
+	}
+	float rotResult = Lerp(t, keyframes[0].rotation, keyframes[0].rotation + rotDiff);
+	if(rotResult < 0) {
+		rotResult += 360;
+	}else if(rotResult > 360) {
+		rotResult -= 360;
+	}
+	result.rotation = rotResult;
 	return result;
 }
