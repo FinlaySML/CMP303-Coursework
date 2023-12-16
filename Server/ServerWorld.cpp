@@ -7,7 +7,7 @@
 #include "BulletHoleEntity.h"
 #include <cassert>
 
-const float CLIENT_UPDATE_DELTA = 0.1f;
+const float CLIENT_UPDATE_FREQUENCY{10.0f};
 
 ServerWorld::ServerWorld(unsigned short port) : usedEntityIds{0}, networking{port} {
     for (int i = 0; i < 16; i++) {
@@ -106,9 +106,9 @@ void ServerWorld::Tick() {
     for (auto& client : disconnected) {
         networking.Broadcast(std::format("A player (ID={}) has left the game", client->id));
     }
-    clientUpdateAccumulator += tickClock.GetTickDelta();
-    if(clientUpdateAccumulator > CLIENT_UPDATE_DELTA) {
-        clientUpdateAccumulator -= CLIENT_UPDATE_DELTA;
+    clientUpdateAccumulator += tickClock.GetTickDelta() * CLIENT_UPDATE_FREQUENCY;
+    if(clientUpdateAccumulator > 1) {
+        clientUpdateAccumulator--;
         // Check TCP connection
         networking.Broadcast(PacketFactory::None());
         // Refresh client clocks
