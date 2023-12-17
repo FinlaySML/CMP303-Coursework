@@ -24,10 +24,6 @@ void ClientPlayerEntity::Draw(sf::RenderWindow& window, int tick) const {
 	window.draw(gun, getTransform());
 }
 
-void ClientPlayerEntity::UpdateFromInput(World* world, InputData inputData) {
-	PlayerEntity::UpdateFromInput(world, inputData);
-}
-
 void ClientPlayerEntity::UpdateFromPacket(sf::Packet& packet) {
 	int tick;
 	float x, y, r;
@@ -38,9 +34,10 @@ void ClientPlayerEntity::UpdateFromPacket(sf::Packet& packet) {
 }
 
 void ClientPlayerEntity::Update(World* world) {
-	localPlayer = ((ClientWorld*)world)->GetLocalPlayer() == GetID();
+	ClientWorld* cWorld{ (ClientWorld*)world };
+	localPlayer = cWorld->GetLocalPlayer() == GetID();
 	if(!localPlayer) {
-		Interpolator::Keyframe kf{interpolator.GetKeyframe()};
+		Interpolator::Keyframe kf{interpolator.GetKeyframe(cWorld->GetClock().GetTick()+cWorld->GetTickOffset())};
 		setPosition(kf.position);
 		setRotation(kf.rotation);
 	}
@@ -59,6 +56,12 @@ void ClientPlayerEntity::Update(World* world) {
 		body.setRadius(0.4f);
 		body.setOrigin(body.getRadius(), body.getRadius());
 	}
+}
+
+void ClientPlayerEntity::SetPlayerState(PacketFactory::PlayerStateData state) {
+	setPosition(state.position);
+	setRotation(state.rotation);
+	gunCooldown = state.gunCooldown;
 }
 
 std::mt19937 randGen;

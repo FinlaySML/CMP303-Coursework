@@ -19,7 +19,7 @@ std::array<sf::Vector2f, 4> directions = {
     sf::Vector2f( 0, 1)
 };
 
-void PlayerEntity::UpdateFromInput(World* world, InputData inputData) {
+void PlayerEntity::UpdateFromInput(World* world, InputData inputData, bool real) {
 	//Position
     float deltaTime{world->GetClock().GetTickDelta()};
     sf::Vector2f velocity{ float(inputData.d - inputData.a), float(inputData.s - inputData.w) };
@@ -52,10 +52,12 @@ void PlayerEntity::UpdateFromInput(World* world, InputData inputData) {
         gunCooldown--;
     } else if (inputData.leftMouse) {
         gunCooldown = 5;
-        auto result = world->RayCast(this, getPosition(), getDirection());
-        if (result.size() > 0) {
-            auto type{ result[0].entity->GetType() };
-            world->GunEffects(this->GetID(), result[0].entity->GetID(), getPosition() + getDirection() * result[0].distance);
+        if(real) {
+            auto result = world->RayCast(this, getPosition(), getDirection());
+            if (result.size() > 0) {
+                auto type{ result[0].entity->GetType() };
+                world->GunEffects(this->GetID(), result[0].entity->GetID(), getPosition() + getDirection() * result[0].distance);
+            }
         }
     }
 }

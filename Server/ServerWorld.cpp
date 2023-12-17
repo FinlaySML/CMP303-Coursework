@@ -120,6 +120,13 @@ void ServerWorld::Tick() {
             }
         }
     }
+    //Reconcile players
+    for (auto& [id, entity] : entities) {
+        if (entity->GetType() == EntityType::PLAYER) {
+            ServerPlayerEntity* p{(ServerPlayerEntity*)entity.get()};
+            p->client->Send(PacketFactory::PlayerState(p->GetPlayerState()));
+        }
+    }
 }
 
 void ServerWorld::DamagePlayer(ServerPlayerEntity* target, ServerPlayerEntity* source, int amount) {

@@ -14,10 +14,14 @@
 
 const int MAX_INPUT_BUFFER_SIZE{4};
 
+const int MAX_TICK_OFFSET_BUFFER_SIZE{20};
+
 ClientWorld::ClientWorld(std::unique_ptr<ClientNetworking>&& server) : World(server->GetServerTick()),
 server { std::move(server) },
 respawnTime{0.0f},
-inputIndex{0} {
+inputIndex{0},
+averageTickOffset{0} {
+    tickOffsets.push_back(0);
 }
 
 void ClientWorld::Update(sf::RenderWindow& window) {
@@ -78,21 +82,53 @@ void ClientWorld::Update(sf::RenderWindow& window) {
                 std::cout << message << std::endl;
             }
             if (type == PacketType::SET_TICK) {
-                tickClock.SetTick(PacketFactory::SetTick(packet));
+                //Add new tick offset
+                tickOffsets.push_back(PacketFactory::SetTick(packet) - tickClock.GetTick());
+                //Remove old tickOffsets
+                if(tickOffsets.size() > MAX_TICK_OFFSET_BUFFER_SIZE) {
+                    tickOffsets.pop_front();
+                }
+                //Update average
+                int sum{0};
+                for(int offset : tickOffsets) {
+                    sum += offset;
+                }
+                averageTickOffset = sum / (int)tickOffsets.size();
+            }
+            if(type == PacketType::PLAYER_STATE) {
+                if (auto playerOpt = TryGetEntity(localPlayer.value_or(0), EntityType::PLAYER)) {
+                    ClientPlayerEntity* player{ (ClientPlayerEntity*)playerOpt.value() };
+                    PacketFactory::PlayerStateData state{PacketFactory::PlayerState(packet)};
+                    if(state.index > 0) {
+                        //Remove unneeded old inputs
+                        //inputBuffer.erase(inputBuffer.begin(), inputBuffer.begin() + (state.index - inputBuffer[0].index + 1));
+                        //Rollback and recompute
+                        player->SetPlayerState(state);
+                        for(PlayerEntity::InputData& data : inputBuffer) {
+                            if(data.index > state.index) {
+                                player->UpdateFromInput(this, data, false);
+                            }
+                        }
+                    }
+                }
             }
         });
         //Local Player Update
         if(auto playerOpt = TryGetEntity(localPlayer.value_or(0), EntityType::PLAYER)) {
+            ClientPlayerEntity* player{ (ClientPlayerEntity*)playerOpt.value() };
             //Get input
             inputBuffer.push_back(GetInputData(window));
-            if(inputBuffer.size() > MAX_INPUT_BUFFER_SIZE) {
-                inputBuffer.erase(inputBuffer.begin());
-            }
-            assert(inputBuffer.size() <= MAX_INPUT_BUFFER_SIZE);
             //Update with input
-            ClientPlayerEntity* player{ (ClientPlayerEntity*)playerOpt.value() };
             player->UpdateFromInput(this, inputBuffer.back());
-            server->Send(PacketFactory::PlayerInput(inputBuffer));
+            std::vector<PlayerEntity::InputData> buff;
+            int s{ (int)inputBuffer.size() };
+            for(int i = 4; i > 0; i--){
+                int ind = s - i;
+                if(ind >= 0) {
+                    buff.push_back(inputBuffer[ind]);
+                }
+            }
+            server->Send(PacketFactory::PlayerInput(buff));
         }
         for(auto& [id, entity] : entities) {
             entity->Update(this);
@@ -183,4 +219,8 @@ bool ClientWorld::Disconnected() const {
 
 std::optional<EntityID> ClientWorld::GetLocalPlayer() const {
     return localPlayer;
+}
+
+int ClientWorld::GetTickOffset() {
+    return averageTickOffset;
 }

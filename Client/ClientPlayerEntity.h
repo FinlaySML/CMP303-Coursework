@@ -19,9 +19,9 @@ class ClientPlayerEntity : public PlayerEntity {
 public:
 	ClientPlayerEntity(EntityID id, int tick, sf::Vector2f position, float rotation);
 	void Draw(sf::RenderWindow& window, int tick) const;
-	void UpdateFromInput(World* world, InputData inputData) override;
 	void UpdateFromPacket(sf::Packet& packet) override;
 	void Update(World* world) override;
+	void SetPlayerState(PacketFactory::PlayerStateData state);
 	void Damage(int amount);
 	void SetLocalPlayer(bool value);
 };

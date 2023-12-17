@@ -24,6 +24,7 @@ enum class PacketType : PacketTypeUnderlying {
 	//Player
 	PLAYER_INPUT,//CLIENT
 	PLAYER_DAMAGE,//SERVER
+	PLAYER_STATE,//SERVER
 	//Other
 	MESSAGE,//SERVER
 	GUN_EFFECTS//SERVER
@@ -67,6 +68,15 @@ public:
 	};
 	static sf::Packet PlayerDamage(EntityID id, int amount);
 	static PlayerDamageData PlayerDamage(sf::Packet& packet);
+	// Player state
+	struct PlayerStateData {
+		sf::Vector2f position;
+		float rotation;
+		int gunCooldown;
+		int index;
+	};
+	static sf::Packet PlayerState(PlayerStateData state);
+	static PlayerStateData PlayerState(sf::Packet& packet);
 	// Messaging
 	static sf::Packet Message(const std::string& message);
 	static std::string Message(sf::Packet& packet);

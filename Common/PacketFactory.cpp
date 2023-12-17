@@ -140,6 +140,25 @@ PacketFactory::PlayerDamageData PacketFactory::PlayerDamage(sf::Packet& packet) 
     return data;
 }
 
+sf::Packet PacketFactory::PlayerState(PlayerStateData state) {
+    sf::Packet packet{};
+    packet << static_cast<PacketTypeUnderlying>(PacketType::PLAYER_STATE);
+    packet << state.position.x << state.position.y;
+    packet << state.rotation;
+    packet << state.gunCooldown;
+    packet << state.index;
+    return packet;
+}
+
+PacketFactory::PlayerStateData PacketFactory::PlayerState(sf::Packet& packet) {
+    PlayerStateData data;
+    packet >> data.position.x >> data.position.y;
+    packet >> data.rotation;
+    packet >> data.gunCooldown;
+    packet >> data.index;
+    return data;
+}
+
 sf::Packet PacketFactory::Message(const std::string& message) {
     sf::Packet packet;
     packet << static_cast<PacketTypeUnderlying>(PacketType::MESSAGE) << message;

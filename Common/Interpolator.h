@@ -12,12 +12,10 @@ public:
 private:
 	int ticks[2];
 	Keyframe keyframes[2];
-	sf::Clock clock;
-	float timePassed;
 	int tickRate;
 public:
 	Interpolator(int tick, int tickRate, sf::Vector2f position, float rotation);
 	void AddKeyframe(int tick, sf::Vector2f position, float rotation);
-	Keyframe GetKeyframe();
+	Keyframe GetKeyframe(int tick);
 };
 
