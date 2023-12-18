@@ -24,7 +24,8 @@ private:
     Stats stats;
 public:
     ConnectedClient(sf::TcpListener& listener, sf::UdpSocket* udp);
-    void Send(sf::Packet packet, bool reliable = true);
+    void Send(sf::Packet packet);
+    void SendUnreliable(sf::Packet packet);
     Status GetStatus() const;
     void SetRespawning(float newRespawnTime);
     void SetPlaying(ServerPlayerEntity* newPlayer);

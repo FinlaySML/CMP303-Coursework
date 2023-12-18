@@ -30,7 +30,8 @@ public:
 	//Returns true when the initialisation is finished
 	bool Init();
 	void ProcessPackets(std::function<void(sf::Packet&)> func);
-	void Send(sf::Packet packet, bool reliable = true);
+	void Send(sf::Packet packet);
+	void SendUnreliable(sf::Packet packet);
 	Status GetStatus() const;
 	int GetPing() const;
 	int GetServerTick() const;

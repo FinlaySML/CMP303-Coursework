@@ -99,29 +99,22 @@ EntityID PacketFactory::EntityDelete(sf::Packet& packet) {
     return id;
 }
 
-sf::Packet PacketFactory::PlayerInput(const std::vector<PlayerEntity::InputData>& inputData) {
+sf::Packet PacketFactory::PlayerInput(PlayerEntity::InputData inputData) {
     sf::Packet packet;
     packet << static_cast<PacketTypeUnderlying>(PacketType::PLAYER_INPUT);
-    packet << inputData.size();
-    for(const PlayerEntity::InputData& data : inputData) {
-        packet << data.index;
-        packet << data.w << data.a << data.s << data.d;
-        packet << data.leftMouse << data.rightMouse;
-        packet << data.target.x << data.target.y;
-    }
+    packet << inputData.index;
+    packet << inputData.w << inputData.a << inputData.s << inputData.d;
+    packet << inputData.leftMouse << inputData.rightMouse;
+    packet << inputData.target.x << inputData.target.y;
     return packet;
 }
 
-std::vector<PlayerEntity::InputData> PacketFactory::PlayerInput(sf::Packet& packet) {
-    size_t s;
-    packet >> s;
-    std::vector<PlayerEntity::InputData> inputData{s};
-    for(PlayerEntity::InputData& data : inputData) {
-        packet >> data.index;
-        packet >> data.w >> data.a >> data.s >> data.d;
-        packet >> data.leftMouse >> data.rightMouse;
-        packet >> data.target.x >> data.target.y;
-    }
+PlayerEntity::InputData PacketFactory::PlayerInput(sf::Packet& packet) {
+    PlayerEntity::InputData inputData{};
+    packet >> inputData.index;
+    packet >> inputData.w >> inputData.a >> inputData.s >> inputData.d;
+    packet >> inputData.leftMouse >> inputData.rightMouse;
+    packet >> inputData.target.x >> inputData.target.y;
     return inputData;
 }
 

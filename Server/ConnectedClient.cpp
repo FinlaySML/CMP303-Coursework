@@ -16,14 +16,14 @@ status{Status::DISCONNECTED} {
 	}
 }
 
-void ConnectedClient::Send(sf::Packet packet, bool reliable) {
-	if(reliable) {
-		if(tcp.send(packet) == sf::Socket::Disconnected){
-			status = Status::DISCONNECTED;
-		}
-	}else{
-		udp->send(packet, tcp.getRemoteAddress(), tcp.getRemotePort());
+void ConnectedClient::Send(sf::Packet packet) {
+	if (tcp.send(packet) == sf::Socket::Disconnected) {
+		status = Status::DISCONNECTED;
 	}
+}
+
+void ConnectedClient::SendUnreliable(sf::Packet packet) {
+	udp->send(packet, tcp.getRemoteAddress(), tcp.getRemotePort());
 }
 
 ConnectedClient::Status ConnectedClient::GetStatus() const {

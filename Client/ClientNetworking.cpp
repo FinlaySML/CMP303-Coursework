@@ -62,14 +62,14 @@ void ClientNetworking::ProcessPackets(std::function<void(sf::Packet&)> func) {
 	}
 }
 
-void ClientNetworking::Send(sf::Packet packet, bool reliable) {
-	if (reliable) {
-		if (tcp.send(packet) == sf::Socket::Disconnected) {
-			status = Status::DISCONNECTED;
-		}
-	} else {
-		udp.send(packet, tcp.getRemoteAddress(), tcp.getRemotePort());
+void ClientNetworking::Send(sf::Packet packet) {
+	if (tcp.send(packet) == sf::Socket::Disconnected) {
+		status = Status::DISCONNECTED;
 	}
+}
+
+void ClientNetworking::SendUnreliable(sf::Packet packet) {
+	udp.send(packet, tcp.getRemoteAddress(), tcp.getRemotePort());
 }
 
 ClientNetworking::Status ClientNetworking::GetStatus() const {

@@ -2,19 +2,20 @@
 #include "PlayerEntity.h"
 #include "PacketFactory.h"
 #include "ConnectedClient.h"
+#include "MovingAverage.h"
 #include <map>
 
 class ServerWorld;
 
 class ServerPlayerEntity : public PlayerEntity {
 	std::map<int, InputData> inputBuffer;
-	int currentInputIndex;
 	int lastProcessedInputIndex;
+	MovingAverage inputIndexOffset;
 public:
 	ServerPlayerEntity(ConnectedClient* client, EntityID id, sf::Vector2f position, float rotation);
 	~ServerPlayerEntity();
-	void BufferInput(const std::vector<InputData>& inputData);
 	PacketFactory::PlayerStateData GetPlayerState() const;
+	void BufferInput(int tick, InputData inputData);
 	void Update(World* world) override;
 	ConnectedClient* client;
 };

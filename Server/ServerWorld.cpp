@@ -61,7 +61,7 @@ void ServerWorld::Tick() {
         if (type == PacketType::PLAYER_INPUT) {
             if (client->player) {
                 auto data = PacketFactory::PlayerInput(packet);
-                client->player->BufferInput(data);
+                client->player->BufferInput(tickClock.GetTick(), data);
             }
         }
     });
@@ -112,11 +112,11 @@ void ServerWorld::Tick() {
         // Check TCP connection
         networking.Broadcast(PacketFactory::None());
         // Refresh client clocks
-        networking.Broadcast(PacketFactory::SetTick(tickClock.GetTick()), 0, false);
+        networking.BroadcastUnreliable(PacketFactory::SetTick(tickClock.GetTick()), 0);
         // Send Player Update Packets
         for (auto& [id, entity] : entities) {
             if (entity->GetType() == EntityType::PLAYER) {
-                networking.Broadcast(entity->UpdatePacket(tickClock.GetTick()), 0, false);
+                networking.BroadcastUnreliable(entity->UpdatePacket(tickClock.GetTick()), 0);
             }
         }
     }

@@ -137,6 +137,7 @@
     <ClInclude Include="BulletHoleEntity.h" />
     <ClInclude Include="Entity.h" />
     <ClInclude Include="Interpolator.h" />
+    <ClInclude Include="MovingAverage.h" />
     <ClInclude Include="PacketFactory.h" />
     <ClInclude Include="PlayerEntity.h" />
     <ClInclude Include="Stats.h" />
@@ -148,6 +149,7 @@
     <ClCompile Include="BulletHoleEntity.cpp" />
     <ClCompile Include="Entity.cpp" />
     <ClCompile Include="Interpolator.cpp" />
+    <ClCompile Include="MovingAverage.cpp" />
     <ClCompile Include="PacketFactory.cpp" />
     <ClCompile Include="PlayerEntity.cpp" />
     <ClCompile Include="Stats.cpp" />

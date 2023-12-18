@@ -59,8 +59,8 @@ public:
 	static sf::Packet EntityDelete(EntityID id);
 	static EntityID EntityDelete(sf::Packet& packet);
 	// Send Player Input
-	static sf::Packet PlayerInput(const std::vector<PlayerEntity::InputData>& inputData);
-	static std::vector<PlayerEntity::InputData> PlayerInput(sf::Packet& packet);
+	static sf::Packet PlayerInput(PlayerEntity::InputData inputData);
+	static PlayerEntity::InputData PlayerInput(sf::Packet& packet);
 	// Damage
 	struct PlayerDamageData {
 		EntityID id;

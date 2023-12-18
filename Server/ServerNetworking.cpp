@@ -61,10 +61,17 @@ void ServerNetworking::ProcessPackets(std::function<void(sf::Packet&, ConnectedC
     }
 }
 
-void ServerNetworking::Broadcast(sf::Packet packet, ClientID excluding, bool reliable) {
+void ServerNetworking::Broadcast(sf::Packet packet, ClientID excluding) {
     for (auto& [id, client] : clients) {
         if (excluding == client->id) continue;
-        client->Send(packet, reliable);
+        client->Send(packet);
+    }
+}
+
+void ServerNetworking::BroadcastUnreliable(sf::Packet packet, ClientID excluding) {
+    for (auto& [id, client] : clients) {
+        if (excluding == client->id) continue;
+        client->SendUnreliable(packet);
     }
 }
 

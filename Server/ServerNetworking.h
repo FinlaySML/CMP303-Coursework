@@ -16,7 +16,8 @@ public:
 	ConnectedClient* GetNewClient();
 	std::vector<std::unique_ptr<ConnectedClient>> GetDisconnectedClients();
 	void ProcessPackets(std::function<void(sf::Packet&, ConnectedClient*)> func);
-	void Broadcast(sf::Packet packet, ClientID excluding = 0, bool reliable = true);
+	void Broadcast(sf::Packet packet, ClientID excluding = 0);
+	void BroadcastUnreliable(sf::Packet packet, ClientID excluding = 0);
 	void Broadcast(const std::string& message);
 	std::vector<ConnectedClient*> UpdateRespawnTimer(float dt);
 private:

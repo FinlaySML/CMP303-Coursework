@@ -6,7 +6,7 @@
 #include <SFML/Graphics/Texture.hpp>
 #include <SFML/Audio.hpp>
 #include "ClientNetworking.h"
-#include <deque>
+#include "MovingAverage.h";
 
 class ClientWorld : public World {
 public:
@@ -21,8 +21,7 @@ public:
     int GetTickOffset();
 private:
     int inputIndex;
-    int averageTickOffset;
-    std::deque<int> tickOffsets;
+    MovingAverage tickOffset;
     std::vector<PlayerEntity::InputData> inputBuffer;
     std::unique_ptr<ClientNetworking> server;
     std::optional<EntityID> localPlayer;
