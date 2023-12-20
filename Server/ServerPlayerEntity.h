@@ -17,6 +17,7 @@ public:
 	ServerPlayerEntity(ConnectedClient* client, EntityID id, sf::Vector2f position, float rotation);
 	~ServerPlayerEntity();
 	PacketFactory::PlayerStateData GetPlayerState() const;
+	const PacketFactory::PlayerStateData& GetHistoricalPlayerState(int ticksPast) const;
 	void BufferInput(int tick, InputData inputData);
 	void Update(World* world) override;
 	ConnectedClient* client;

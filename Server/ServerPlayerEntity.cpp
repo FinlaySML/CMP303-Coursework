@@ -31,6 +31,17 @@ PacketFactory::PlayerStateData ServerPlayerEntity::GetPlayerState() const {
 	return state;
 }
 
+const PacketFactory::PlayerStateData& ServerPlayerEntity::GetHistoricalPlayerState(int ticksPast) const {
+	assert(ticksPast >= 0);
+	assert(history.size() > 0);
+	if(ticksPast >= history.size()) {
+		//Oldest element
+		return history[0];
+	}else{
+		return history[history.size()-ticksPast-1];
+	}
+}
+
 void ServerPlayerEntity::BufferInput(int tick, InputData inputData) {
 	inputBuffer[inputData.index] = inputData;
 	inputIndexOffset.AddValue(inputData.index - tick);

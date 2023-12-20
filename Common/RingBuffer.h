@@ -12,6 +12,7 @@ public:
 	size_t size() const;
 	void push(T value);
 	T& operator[](size_t index);
+	const T& operator[](size_t index) const;
 };
 
 template<class T, size_t N>
@@ -36,7 +37,13 @@ inline void RingBuffer<T, N>::push(T value) {
 }
 
 template<class T, size_t N>
-inline T& RingBuffer<T, N>::operator[](size_t index) {
+T& RingBuffer<T, N>::operator[](size_t index) {
+	assert(index >= 0 && index < used);
+	return data[(start + index) % N];
+}
+
+template<class T, size_t N>
+const T& RingBuffer<T, N>::operator[](size_t index) const {
 	assert(index >= 0 && index < used);
 	return data[(start + index) % N];
 }
