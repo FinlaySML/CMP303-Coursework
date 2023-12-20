@@ -4,6 +4,7 @@
 #include "ConnectedClient.h"
 #include "MovingAverage.h"
 #include <map>
+#include "RingBuffer.h"
 
 class ServerWorld;
 
@@ -11,6 +12,7 @@ class ServerPlayerEntity : public PlayerEntity {
 	std::map<int, InputData> inputBuffer;
 	int lastProcessedInputIndex;
 	MovingAverage inputIndexOffset;
+	RingBuffer<PacketFactory::PlayerStateData, 60> history;
 public:
 	ServerPlayerEntity(ConnectedClient* client, EntityID id, sf::Vector2f position, float rotation);
 	~ServerPlayerEntity();

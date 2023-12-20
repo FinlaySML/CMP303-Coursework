@@ -43,10 +43,11 @@ void ServerPlayerEntity::Update(World* world) {
 		if(currentInputIndex < lastProcessedInputIndex) {
 			currentInputIndex = lastProcessedInputIndex;
 		}
-		//Get min and max index
+		//Get the current input index closest indexed input before it
 		auto element{--inputBuffer.upper_bound(currentInputIndex)};
 		PlayerEntity::UpdateFromInput(world, element->second);
 		lastProcessedInputIndex = currentInputIndex;
+		history.push(GetPlayerState());
 		//Remove old inputs from buffer
 		std::erase_if(inputBuffer, [=](const auto& pair) {
 			const auto& [i, data] = pair;

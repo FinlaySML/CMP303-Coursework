@@ -140,6 +140,7 @@
     <ClInclude Include="MovingAverage.h" />
     <ClInclude Include="PacketFactory.h" />
     <ClInclude Include="PlayerEntity.h" />
+    <ClInclude Include="RingBuffer.h" />
     <ClInclude Include="Stats.h" />
     <ClInclude Include="TickClock.h" />
     <ClInclude Include="World.h" />
@@ -152,6 +153,7 @@
     <ClCompile Include="MovingAverage.cpp" />
     <ClCompile Include="PacketFactory.cpp" />
     <ClCompile Include="PlayerEntity.cpp" />
+    <ClCompile Include="RingBuffer.cpp" />
     <ClCompile Include="Stats.cpp" />
     <ClCompile Include="TickClock.cpp" />
     <ClCompile Include="World.cpp" />

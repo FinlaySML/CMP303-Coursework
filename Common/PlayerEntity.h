@@ -3,12 +3,6 @@
 #include <vector>
 #include "World.h"
 
-struct PlayerState {
-	sf::Vector2f position;
-	float rotation;
-	int gunCooldown;
-};
-
 class PlayerEntity : public Entity {
 public:
 	struct InputData {
