@@ -12,14 +12,11 @@
 #include <iostream>
 #include <cassert>
 
-
-const int TICK_OFFSET_BUFFER_SIZE{20};
-
 ClientWorld::ClientWorld(std::unique_ptr<ClientNetworking>&& server) : World(server->GetServerTick()),
 server { std::move(server) },
 respawnTime{0.0f},
 inputIndex{0},
-tickOffset{TICK_OFFSET_BUFFER_SIZE } {
+tickOffset{ 0.01f } {
     tickOffset.AddValue(0);
 }
 

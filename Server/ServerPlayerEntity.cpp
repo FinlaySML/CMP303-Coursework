@@ -11,7 +11,7 @@ ServerPlayerEntity::ServerPlayerEntity(ConnectedClient* client, EntityID id, sf:
 PlayerEntity(id, position, rotation), 
 client{ client },
 lastProcessedInputIndex{0},
-inputIndexOffset{120} {
+inputIndexOffset{0.01f} {
 	inputBuffer[-1000] = {};
 	client->player = this;
 }
@@ -37,7 +37,7 @@ void ServerPlayerEntity::BufferInput(int tick, InputData inputData) {
 }
 
 void ServerPlayerEntity::Update(World* world) {
-	if(!inputIndexOffset.IsEmpty()){
+	if(inputIndexOffset.IsInitialised()){
 		int currentInputIndex{world->GetClock().GetTick()+inputIndexOffset.GetAverage()-INPUT_LAG};
 		//Prevent going backwards
 		if(currentInputIndex < lastProcessedInputIndex) {

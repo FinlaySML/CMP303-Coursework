@@ -1,28 +1,26 @@
 #include "MovingAverage.h"
-#include <vector>
-#include <algorithm>
-#include <iterator>
+#include <cassert>
 
-MovingAverage::MovingAverage(size_t maxSize) :
-maxSize{ maxSize },
-median{ 0 } {
+MovingAverage::MovingAverage(float alpha) :
+alpha{ alpha },
+average{ 0.0f },
+initialised{ false } {
 }
 
 void MovingAverage::AddValue(int value) {
-	buffer.push_back(value);
-	if (buffer.size() > maxSize) {
-		buffer.pop_front();
+	if(!initialised) {
+		initialised = true;
+		average = value;
+		return;
 	}
-	//Sort and get the median
-	std::vector<int> sorted(buffer.begin(), buffer.end());
-	std::sort(sorted.begin(), sorted.end());
-	median = sorted[sorted.size()/2];
+	average = average * (1.0f - alpha) + value * alpha;
 }
 
 int MovingAverage::GetAverage() const {
-	return median;
+	assert(initialised);
+	return average;
 }
 
-bool MovingAverage::IsEmpty() const {
-	return buffer.size() == 0;
+bool MovingAverage::IsInitialised() const {
+	return initialised;
 }

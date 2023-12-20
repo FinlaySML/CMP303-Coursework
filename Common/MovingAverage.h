@@ -1,12 +1,11 @@
 #pragma once
-#include <deque>
 class MovingAverage {
-	std::deque<int> buffer;
-	size_t maxSize;
-	int median;
+	float alpha;
+	float average;
+	bool initialised;
 public:
-	MovingAverage(size_t maxSize);
+	MovingAverage(float alpha);
 	void AddValue(int value);
 	int GetAverage() const;
-	bool IsEmpty() const;
+	bool IsInitialised() const;
 };
