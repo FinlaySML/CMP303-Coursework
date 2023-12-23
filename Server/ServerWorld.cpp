@@ -64,6 +64,9 @@ void ServerWorld::Tick() {
                 client->player->BufferInput(tickClock.GetTick(), data);
             }
         }
+        if(type == PacketType::ACK_TICK) {
+            client->pingTicks.AddValue(tickClock.GetTick() - PacketFactory::AckTick(packet));
+        }
     });
     for(auto* newClient : clientsToInit) {
         if(newClient->GetStatus() == ConnectedClient::Status::LOADING) {

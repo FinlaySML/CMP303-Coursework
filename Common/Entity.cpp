@@ -70,3 +70,9 @@ void Entity::UpdateFromPacket(sf::Packet& packet) {
 std::optional<sf::FloatRect> Entity::GetCollisionBox() const {
 	return {};
 }
+
+bool Entity::ContainsPoint(sf::Vector2f point, int ticksPast) const {
+	auto box{GetCollisionBox()};
+	if(!box) return false;
+	return box->contains(point);
+}

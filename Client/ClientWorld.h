@@ -18,6 +18,7 @@ public:
     static Entity* CreateFromPacket(sf::Packet& packet);
     bool Disconnected() const;
     std::optional<EntityID> GetLocalPlayer() const;
+    ClientPlayerEntity* GetLocalPlayerEntity() const;
     int GetTickOffset();
 private:
     int inputIndex;

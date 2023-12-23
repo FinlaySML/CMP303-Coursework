@@ -4,6 +4,7 @@
 #include <SFML/Network/UdpSocket.hpp>
 #include "Entity.h"
 #include "Stats.h"
+#include "MovingAverage.h"
 class ServerPlayerEntity;
 
 using ClientID = std::uint16_t;
@@ -34,5 +35,6 @@ public:
     //May be nullptr
     ServerPlayerEntity* player;
     float respawnTime;
+    MovingAverage pingTicks;
 };
 

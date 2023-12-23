@@ -31,6 +31,7 @@ public:
 	virtual void UpdateFromPacket(sf::Packet& packet);
 	//Physics
 	virtual std::optional<sf::FloatRect> GetCollisionBox() const;
+	virtual bool ContainsPoint(sf::Vector2f point, int ticksPast = 0) const;
 	bool ShouldRemove() const;
 	void Kill();
 private:

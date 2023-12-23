@@ -16,7 +16,7 @@ ClientWorld::ClientWorld(std::unique_ptr<ClientNetworking>&& server) : World(ser
 server { std::move(server) },
 respawnTime{0.0f},
 inputIndex{0},
-tickOffset{ 0.01f } {
+tickOffset{ 0.1f } {
     tickOffset.AddValue(0);
 }
 
@@ -78,11 +78,12 @@ void ClientWorld::Update(sf::RenderWindow& window) {
                 std::cout << message << std::endl;
             }
             if (type == PacketType::SET_TICK) {
-                tickOffset.AddValue(PacketFactory::SetTick(packet) - tickClock.GetTick());
+                int tick{ PacketFactory::SetTick(packet) };
+                tickOffset.AddValue(tick - tickClock.GetTick());
+                server->SendUnreliable(PacketFactory::AckTick(tick));
             }
             if(type == PacketType::PLAYER_STATE) {
-                if (auto playerOpt = TryGetEntity(localPlayer.value_or(0), EntityType::PLAYER)) {
-                    ClientPlayerEntity* player{ (ClientPlayerEntity*)playerOpt.value() };
+                if (auto* player{ GetLocalPlayerEntity() }) {
                     PacketFactory::PlayerStateData state{PacketFactory::PlayerState(packet)};
                     if(state.index > 0) {
                         //Remove unneeded old inputs
@@ -100,8 +101,7 @@ void ClientWorld::Update(sf::RenderWindow& window) {
             }
         });
         //Local Player Update
-        if(auto playerOpt = TryGetEntity(localPlayer.value_or(0), EntityType::PLAYER)) {
-            ClientPlayerEntity* player{ (ClientPlayerEntity*)playerOpt.value() };
+        if(auto* player{GetLocalPlayerEntity()}) {
             //Get input
             inputBuffer.push_back(GetInputData(window));
             //Update with input
@@ -197,6 +197,13 @@ bool ClientWorld::Disconnected() const {
 
 std::optional<EntityID> ClientWorld::GetLocalPlayer() const {
     return localPlayer;
+}
+
+ClientPlayerEntity* ClientWorld::GetLocalPlayerEntity() const {
+    if (!localPlayer) return nullptr;
+    std::optional<Entity*> entityOpt{ TryGetEntity(localPlayer.value(), EntityType::PLAYER) };
+    if (!entityOpt) return nullptr;
+    return (ClientPlayerEntity*)entityOpt.value();
 }
 
 int ClientWorld::GetTickOffset() {

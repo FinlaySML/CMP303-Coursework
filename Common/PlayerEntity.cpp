@@ -19,7 +19,7 @@ std::array<sf::Vector2f, 4> directions = {
     sf::Vector2f( 0, 1)
 };
 
-void PlayerEntity::UpdateFromInput(World* world, InputData inputData, bool real) {
+void PlayerEntity::UpdateFromInput(World* world, InputData inputData, bool real, int ticksPast) {
 	//Position
     float deltaTime{world->GetClock().GetTickDelta()};
     sf::Vector2f velocity{ float(inputData.d - inputData.a), float(inputData.s - inputData.w) };
@@ -53,10 +53,10 @@ void PlayerEntity::UpdateFromInput(World* world, InputData inputData, bool real)
     } else if (inputData.leftMouse) {
         gunCooldown = 5;
         if(real) {
-            auto result = world->RayCast(this, getPosition(), getDirection());
+            auto result = world->RayCast(this, getPosition(), getDirection(), ticksPast);
             if (result.size() > 0) {
                 auto type{ result[0].entity->GetType() };
-                world->GunEffects(this->GetID(), result[0].entity->GetID(), getPosition() + getDirection() * result[0].distance);
+                world->GunEffects(GetID(), result[0].entity->GetID(), getPosition() + getDirection() * result[0].distance);
             }
         }
     }
@@ -68,6 +68,11 @@ int PlayerEntity::GetHealth() const {
 
 EntityID PlayerEntity::GetCauseOfDeath() const {
     return causeOfDeath;
+}
+
+bool PlayerEntity::ContainsPoint(sf::Vector2f point, int ticksPast) const {
+    sf::Vector2f diff{getPosition() - point};
+    return diff.x * diff.x + diff.y * diff.y < 0.4f * 0.4f;
 }
 
 void PlayerEntity::Damage(EntityID source, int amount) {

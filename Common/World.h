@@ -12,8 +12,8 @@ public:
 	World(int startingTick = 0);
 	void AddEntity(Entity* entity);
 	void RemoveEntity(EntityID entity);
-	Entity* GetEntity(EntityID id, EntityType type = EntityType::UNKNOWN);
-	std::optional<Entity*> TryGetEntity(EntityID id, EntityType type = EntityType::UNKNOWN);
+	Entity* GetEntity(EntityID id, EntityType type = EntityType::UNKNOWN) const;
+	std::optional<Entity*> TryGetEntity(EntityID id, EntityType type = EntityType::UNKNOWN) const;
 	std::vector<Entity*> GetEntities();
 	struct IntersectionResult {
 		Entity* entity;
@@ -24,7 +24,7 @@ public:
 		Entity* entity;
 		float distance;
 	};
-	std::vector<RayCastResult> RayCast(Entity* exclude, sf::Vector2f origin, sf::Vector2f direction, float maxDistance = 100.f);
+	std::vector<RayCastResult> RayCast(Entity* exclude, sf::Vector2f origin, sf::Vector2f direction, int ticksPast = 0);
 	virtual void GunEffects(EntityID sourceEntity, EntityID hitEntity, sf::Vector2f hitPosition) = 0;
 	const TickClock& GetClock() const;
 protected:

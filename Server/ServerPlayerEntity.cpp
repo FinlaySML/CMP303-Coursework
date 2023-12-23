@@ -7,11 +7,13 @@
 
 const int INPUT_LAG{4};
 
+const int CLIENT_INTERPOLATION_DELAY{6}; //100 ms = 6 ticks
+
 ServerPlayerEntity::ServerPlayerEntity(ConnectedClient* client, EntityID id, sf::Vector2f position, float rotation) : 
 PlayerEntity(id, position, rotation), 
 client{ client },
 lastProcessedInputIndex{0},
-inputIndexOffset{0.01f} {
+inputIndexOffset{0.1f} {
 	inputBuffer[-1000] = {};
 	client->player = this;
 }
@@ -42,6 +44,11 @@ const PacketFactory::PlayerStateData& ServerPlayerEntity::GetHistoricalPlayerSta
 	}
 }
 
+bool ServerPlayerEntity::ContainsPoint(sf::Vector2f point, int ticksPast) const {
+	sf::Vector2f diff{ GetHistoricalPlayerState(ticksPast).position - point};
+	return diff.x * diff.x + diff.y * diff.y < 0.4f * 0.4f;
+}
+
 void ServerPlayerEntity::BufferInput(int tick, InputData inputData) {
 	inputBuffer[inputData.index] = inputData;
 	inputIndexOffset.AddValue(inputData.index - tick);
@@ -49,14 +56,14 @@ void ServerPlayerEntity::BufferInput(int tick, InputData inputData) {
 
 void ServerPlayerEntity::Update(World* world) {
 	if(inputIndexOffset.IsInitialised()){
-		int currentInputIndex{world->GetClock().GetTick()+inputIndexOffset.GetAverage()-INPUT_LAG};
+		int currentInputIndex{ world->GetClock().GetTick() + inputIndexOffset.GetAverage() - INPUT_LAG};
 		//Prevent going backwards
 		if(currentInputIndex < lastProcessedInputIndex) {
 			currentInputIndex = lastProcessedInputIndex;
 		}
-		//Get the current input index closest indexed input before it
+		//Get the current input index, if not available get the last one that comes before it
 		auto element{--inputBuffer.upper_bound(currentInputIndex)};
-		PlayerEntity::UpdateFromInput(world, element->second);
+		PlayerEntity::UpdateFromInput(world, element->second, true, INPUT_LAG + CLIENT_INTERPOLATION_DELAY + client->pingTicks.GetAverage());
 		lastProcessedInputIndex = currentInputIndex;
 		history.push(GetPlayerState());
 		//Remove old inputs from buffer

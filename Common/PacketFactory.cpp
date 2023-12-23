@@ -38,6 +38,19 @@ int PacketFactory::SetTick(sf::Packet& packet) {
     return tick;
 }
 
+sf::Packet PacketFactory::AckTick(int tick) {
+    sf::Packet packet;
+    packet << static_cast<PacketTypeUnderlying>(PacketType::ACK_TICK);
+    packet << tick;
+    return packet;
+}
+
+int PacketFactory::AckTick(sf::Packet& packet) {
+    int tick;
+    packet >> tick;
+    return tick;
+}
+
 sf::Packet PacketFactory::ModeRespawning(float respawnTime) {
     sf::Packet packet;
     packet << static_cast<PacketTypeUnderlying>(PacketType::MODE_RESPAWNING);

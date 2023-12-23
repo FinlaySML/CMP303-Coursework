@@ -9,7 +9,9 @@ udp{udp},
 id{0}, 
 player{nullptr},
 respawnTime{0.0f},
-status{Status::DISCONNECTED} {
+status{Status::DISCONNECTED},
+pingTicks{0.1f} {
+	pingTicks.AddValue(0);
 	tcp.setBlocking(false);
 	if(listener.accept(tcp) == sf::Socket::Done) {
 		status = Status::LOADING;

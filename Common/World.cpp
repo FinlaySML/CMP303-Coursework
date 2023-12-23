@@ -2,6 +2,7 @@
 #include <unordered_set>
 #include <stdexcept>
 #include <format>
+#include <ranges>
 
 World::World(int startingTick) : tickClock{60, startingTick} {
 }
@@ -14,7 +15,7 @@ void World::RemoveEntity(EntityID id) {
     entities.erase(id);
 }
 
-Entity* World::GetEntity(EntityID id, EntityType type) {
+Entity* World::GetEntity(EntityID id, EntityType type) const {
     auto entity{TryGetEntity(id, type)};
     if(entity) {
         return entity.value();
@@ -22,7 +23,7 @@ Entity* World::GetEntity(EntityID id, EntityType type) {
     throw std::out_of_range(std::format("Could not find entity with id {} and type {}", (int)id, (int)type));
 }
 
-std::optional<Entity*> World::TryGetEntity(EntityID id, EntityType type) {
+std::optional<Entity*> World::TryGetEntity(EntityID id, EntityType type) const {
     auto it = entities.find(id);
     if (it == entities.end()) {
         return {};
@@ -67,17 +68,19 @@ std::vector<World::IntersectionResult> World::GetIntersecting(Entity* source) {
 	return result;
 }
 
-std::vector<World::RayCastResult> World::RayCast(Entity* exclude, sf::Vector2f origin, sf::Vector2f direction, float maxDistance) {
+const float MAX_RAYCAST_DISTANCE{20.0f};
+
+std::vector<World::RayCastResult> World::RayCast(Entity* exclude, sf::Vector2f origin, sf::Vector2f direction, int ticksPast) {
     std::vector<World::RayCastResult> result;
-    std::unordered_set<EntityID> alreadyHit;
-    for(float distance = 0.0f; distance < maxDistance; distance += 0.1f){
+    EntityID alreadyHit{0};
+    for(float distance = 0.0f; distance < MAX_RAYCAST_DISTANCE; distance += 0.25f){
         sf::Vector2f point{origin + direction * distance};
         for(auto& [id, entity] : entities) {
             if(entity.get() == exclude) continue;
-            if(!entity->GetCollisionBox()) continue;
-            if(entity->GetCollisionBox().value().contains(point) && !alreadyHit.contains(id)) {
+            if(id == alreadyHit) continue;
+            if(entity->ContainsPoint(point, ticksPast)) {
                 result.push_back({entity.get(), distance});
-                alreadyHit.insert(id);
+                alreadyHit = id;
             }
         }
     }

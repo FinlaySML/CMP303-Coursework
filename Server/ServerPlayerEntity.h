@@ -18,6 +18,7 @@ public:
 	~ServerPlayerEntity();
 	PacketFactory::PlayerStateData GetPlayerState() const;
 	const PacketFactory::PlayerStateData& GetHistoricalPlayerState(int ticksPast) const;
+	bool ContainsPoint(sf::Vector2f point, int ticksPast = 0) const override;
 	void BufferInput(int tick, InputData inputData);
 	void Update(World* world) override;
 	ConnectedClient* client;

@@ -12,6 +12,7 @@ enum class PacketType : PacketTypeUnderlying {
 	PING,//CLIENT
 	PONG,//SERVER
 	SET_TICK,//SERVER
+	ACK_TICK,//CLIENT
 	//MODE
 	MODE_RESPAWNING,//SERVER
 	MODE_PLAYING,//SERVER
@@ -42,6 +43,9 @@ public:
 	// Set Tick
 	static sf::Packet SetTick(int tick);
 	static int SetTick(sf::Packet& packet);
+	// Acknowledge Tick
+	static sf::Packet AckTick(int tick);
+	static int AckTick(sf::Packet& packet);
 	// Mode Respawning
 	static sf::Packet ModeRespawning(float respawnTime);
 	static float ModeRespawning(sf::Packet& packet);
