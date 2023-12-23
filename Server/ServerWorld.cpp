@@ -49,15 +49,12 @@ void ServerWorld::Tick() {
         SpawnPlayer(client);
     }
     //Connect clients
-    networking.GetNewClient();
+    ConnectedClient* nc{networking.GetNewClient()};
+    if(nc) nc->Send(PacketFactory::SetTick(tickClock.GetTick()));
     // Recieve Packets
     std::vector<ConnectedClient*> clientsToInit;
     networking.ProcessPackets([&](sf::Packet& packet, ConnectedClient* client){
         PacketType type{ PacketFactory::GetType(packet) };
-        if (type == PacketType::PING) {
-            client->Send(PacketFactory::Pong(tickClock.GetTick()));
-            clientsToInit.push_back(client);
-        }
         if (type == PacketType::PLAYER_INPUT) {
             if (client->player) {
                 auto data = PacketFactory::PlayerInput(packet);
@@ -66,16 +63,20 @@ void ServerWorld::Tick() {
         }
         if(type == PacketType::ACK_TICK) {
             client->pingTicks.AddValue(tickClock.GetTick() - PacketFactory::AckTick(packet));
+            client->SendUnreliable(PacketFactory::TellRTT(client->pingTicks.GetAverage()));
+            if (client->GetStatus() == ConnectedClient::Status::LOADING) {
+                clientsToInit.push_back(client);
+            }
         }
     });
     for(auto* newClient : clientsToInit) {
-        if(newClient->GetStatus() == ConnectedClient::Status::LOADING) {
-            //Join game
+        if (newClient->GetStatus() == ConnectedClient::Status::LOADING) {
+            // Join game
             for (auto& [id, entity] : entities) {
                 newClient->Send(entity->CreationPacket(tickClock.GetTick()));
             }
             networking.Broadcast(std::format("A player (ID={}) has joined the game", newClient->id));
-            //Spawn player
+            // Spawn player
             SpawnPlayer(newClient);
         }
     }

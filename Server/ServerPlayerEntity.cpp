@@ -33,9 +33,11 @@ PacketFactory::PlayerStateData ServerPlayerEntity::GetPlayerState() const {
 	return state;
 }
 
-const PacketFactory::PlayerStateData& ServerPlayerEntity::GetHistoricalPlayerState(int ticksPast) const {
+PacketFactory::PlayerStateData ServerPlayerEntity::GetHistoricalPlayerState(int ticksPast) const {
 	assert(ticksPast >= 0);
-	assert(history.size() > 0);
+	if(history.size() == 0) {
+		return GetPlayerState();
+	}
 	if(ticksPast >= history.size()) {
 		//Oldest element
 		return history[0];

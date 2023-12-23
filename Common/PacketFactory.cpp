@@ -6,25 +6,6 @@ PacketType PacketFactory::GetType(sf::Packet& packet) {
     return (PacketType)type;
 }
 
-sf::Packet PacketFactory::Ping() {
-    sf::Packet packet;
-    packet << static_cast<PacketTypeUnderlying>(PacketType::PING);
-    return packet;
-}
-
-sf::Packet PacketFactory::Pong(int tick) {
-    sf::Packet packet;
-    packet << static_cast<PacketTypeUnderlying>(PacketType::PONG);
-    packet << tick;
-    return packet;
-}
-
-int PacketFactory::Pong(sf::Packet& packet) {
-    int data;
-    packet >> data;
-    return data;
-}
-
 sf::Packet PacketFactory::SetTick(int tick) {
     sf::Packet packet;
     packet << static_cast<PacketTypeUnderlying>(PacketType::SET_TICK);
@@ -49,6 +30,19 @@ int PacketFactory::AckTick(sf::Packet& packet) {
     int tick;
     packet >> tick;
     return tick;
+}
+
+sf::Packet PacketFactory::TellRTT(int tick) {
+    sf::Packet packet;
+    packet << static_cast<PacketTypeUnderlying>(PacketType::TELL_RTT);
+    packet << tick;
+    return packet;
+}
+
+int PacketFactory::TellRTT(sf::Packet& packet) {
+    int rtt;
+    packet >> rtt;
+    return rtt;
 }
 
 sf::Packet PacketFactory::ModeRespawning(float respawnTime) {

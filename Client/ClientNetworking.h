@@ -6,12 +6,13 @@
 #include <functional>
 #include <future>
 #include "Stats.h"
+#include "MovingAverage.h"
 
 class ClientNetworking {
 public:
 	enum class Status {
 		PENDING_CONNECT,
-		PENDING_PONG,
+		PENDING_SET_TICK,
 		CONNECTED,
 		DISCONNECTED
 	};
@@ -22,8 +23,6 @@ private:
 	//Establishing connection
 	std::future<sf::Socket::Status> pending;
 	sf::Packet firstPacket;
-	sf::Clock pingClock;
-	int ping;
 	int serverTick;
 public:
 	ClientNetworking(sf::IpAddress serverIp, unsigned short serverPort, float waitTime);
@@ -33,8 +32,8 @@ public:
 	void Send(sf::Packet packet);
 	void SendUnreliable(sf::Packet packet);
 	Status GetStatus() const;
-	int GetPing() const;
 	int GetServerTick() const;
 	Stats stats;
+	int rtt;
 };
 

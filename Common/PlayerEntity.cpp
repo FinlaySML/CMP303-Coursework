@@ -51,7 +51,7 @@ void PlayerEntity::UpdateFromInput(World* world, InputData inputData, bool real,
     if (gunCooldown > 0) {
         gunCooldown--;
     } else if (inputData.leftMouse) {
-        gunCooldown = 5;
+        gunCooldown = 10;
         if(real) {
             auto result = world->RayCast(this, getPosition(), getDirection(), ticksPast);
             if (result.size() > 0) {

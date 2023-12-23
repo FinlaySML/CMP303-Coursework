@@ -82,6 +82,9 @@ void ClientWorld::Update(sf::RenderWindow& window) {
                 tickOffset.AddValue(tick - tickClock.GetTick());
                 server->SendUnreliable(PacketFactory::AckTick(tick));
             }
+            if(type == PacketType::TELL_RTT) {
+                server->rtt = PacketFactory::TellRTT(packet);
+            }
             if(type == PacketType::PLAYER_STATE) {
                 if (auto* player{ GetLocalPlayerEntity() }) {
                     PacketFactory::PlayerStateData state{PacketFactory::PlayerState(packet)};
@@ -128,7 +131,7 @@ void ClientWorld::Render(sf::RenderWindow& window) {
         text.setPosition(pos);
         window.draw(text);
     };
-    drawString(std::format("PING {} ms", server->GetPing()), {0, 0});
+    drawString(std::format("RTT {} ticks", server->rtt), {0, 0});
     if (auto playerOpt = TryGetEntity(localPlayer.value_or(0), EntityType::PLAYER)) {
         ClientPlayerEntity* player{ (ClientPlayerEntity*)playerOpt.value() };
         drawString(std::format("HP {}", player->GetHealth()), {0, 24});

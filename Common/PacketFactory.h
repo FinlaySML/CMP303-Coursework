@@ -9,10 +9,9 @@ using PacketTypeUnderlying = std::uint8_t;
 enum class PacketType : PacketTypeUnderlying {
 	//Session
 	NONE,//SERVER
-	PING,//CLIENT
-	PONG,//SERVER
 	SET_TICK,//SERVER
 	ACK_TICK,//CLIENT
+	TELL_RTT,//SERVER
 	//MODE
 	MODE_RESPAWNING,//SERVER
 	MODE_PLAYING,//SERVER
@@ -36,16 +35,15 @@ public:
 	static PacketType GetType(sf::Packet& packet);
 	// None
 	static sf::Packet None();
-	// Ping Pong
-	static sf::Packet Ping();
-	static sf::Packet Pong(int tick);
-	static int Pong(sf::Packet& packet);
 	// Set Tick
 	static sf::Packet SetTick(int tick);
 	static int SetTick(sf::Packet& packet);
 	// Acknowledge Tick
 	static sf::Packet AckTick(int tick);
 	static int AckTick(sf::Packet& packet);
+	// Tell Round-trip-time
+	static sf::Packet TellRTT(int rtt);
+	static int TellRTT(sf::Packet& packet);
 	// Mode Respawning
 	static sf::Packet ModeRespawning(float respawnTime);
 	static float ModeRespawning(sf::Packet& packet);
