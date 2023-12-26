@@ -76,7 +76,7 @@ void ServerWorld::Tick() {
             for (auto& [id, entity] : entities) {
                 newClient->Send(entity->CreationPacket(tickClock.GetTick()));
             }
-            networking.Broadcast(std::format("A player (ID={}) has joined the game", newClient->id));
+            networking.Broadcast(std::format("Player {} has joined the game", newClient->id));
             // Spawn player
             SpawnPlayer(newClient);
         }
@@ -103,9 +103,9 @@ void ServerWorld::Tick() {
                 if(auto cause = TryGetEntity(serverPlayer->GetCauseOfDeath(), EntityType::PLAYER)) {
                     ServerPlayerEntity* murderer{ ((ServerPlayerEntity*)cause.value()) };
                     if (murderer != serverPlayer) murderer->client->IncrementStat(Stats::Type::KILLS);
-                    networking.Broadcast(std::format("Player (ID={}) was killed by player (ID={})", serverPlayer->GetID(), murderer->GetID()));
+                    networking.Broadcast(std::format("Player {} was killed by player {}", serverPlayer->client->id, murderer->client->id));
                 }else{
-                    networking.Broadcast(std::format("Player (ID={}) died", serverPlayer->GetID()));
+                    networking.Broadcast(std::format("Player {} died", serverPlayer->client->id));
                 }
             }
         }
@@ -113,7 +113,7 @@ void ServerWorld::Tick() {
     CleanEntities();
     //Clear clients
     for (auto& client : disconnected) {
-        networking.Broadcast(std::format("A player (ID={}) has left the game", client->id));
+        networking.Broadcast(std::format("Player {} has left the game", client->id));
     }
     clientUpdateAccumulator += tickClock.GetTickDelta() * CLIENT_UPDATE_FREQUENCY;
     if(clientUpdateAccumulator > 1) {
