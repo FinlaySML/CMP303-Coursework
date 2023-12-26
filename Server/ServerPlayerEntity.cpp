@@ -29,6 +29,7 @@ PacketFactory::PlayerStateData ServerPlayerEntity::GetPlayerState() const {
 	state.position = getPosition();
 	state.rotation = getRotation();
 	state.gunCooldown = gunCooldown;
+	state.rocketCooldown = rocketCooldown;
 	state.index = lastProcessedInputIndex;
 	return state;
 }

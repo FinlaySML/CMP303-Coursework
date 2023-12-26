@@ -146,6 +146,7 @@ sf::Packet PacketFactory::PlayerState(PlayerStateData state) {
     packet << state.position.x << state.position.y;
     packet << state.rotation;
     packet << state.gunCooldown;
+    packet << state.rocketCooldown;
     packet << state.index;
     return packet;
 }
@@ -155,6 +156,7 @@ PacketFactory::PlayerStateData PacketFactory::PlayerState(sf::Packet& packet) {
     packet >> data.position.x >> data.position.y;
     packet >> data.rotation;
     packet >> data.gunCooldown;
+    packet >> data.rocketCooldown;
     packet >> data.index;
     return data;
 }

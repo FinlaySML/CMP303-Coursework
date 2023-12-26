@@ -75,6 +75,7 @@ public:
 		sf::Vector2f position;
 		float rotation;
 		int gunCooldown;
+		int rocketCooldown;
 		int index;
 	};
 	static sf::Packet PlayerState(PlayerStateData state);

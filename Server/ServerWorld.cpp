@@ -10,7 +10,7 @@
 
 const float CLIENT_UPDATE_FREQUENCY{10.0f};
 
-ServerWorld::ServerWorld(unsigned short port) : usedEntityIds{0}, networking{port} {
+ServerWorld::ServerWorld(unsigned short port) : World(World::Side::SERVER), usedEntityIds{0}, networking{port} {
     for (int i = 0; i < 16; i++) {
         AddEntity(new BarrierEntity(GetNewEntityID(), sf::Vector2f(i - 8, -6)));
         AddEntity(new BarrierEntity(GetNewEntityID(), sf::Vector2f(i - 8, 5)));
@@ -101,7 +101,11 @@ void ServerWorld::Tick() {
                 serverPlayer->client->IncrementStat(Stats::Type::DEATHS);
                 serverPlayer->client->SetRespawning(10.0f);
                 if(auto cause = TryGetEntity(serverPlayer->GetCauseOfDeath(), EntityType::PLAYER)) {
-                    ((ServerPlayerEntity*)cause.value())->client->IncrementStat(Stats::Type::KILLS);
+                    ServerPlayerEntity* murderer{ ((ServerPlayerEntity*)cause.value()) };
+                    if (murderer != serverPlayer) murderer->client->IncrementStat(Stats::Type::KILLS);
+                    networking.Broadcast(std::format("Player (ID={}) was killed by player (ID={})", serverPlayer->GetID(), murderer->GetID()));
+                }else{
+                    networking.Broadcast(std::format("Player (ID={}) died", serverPlayer->GetID()));
                 }
             }
         }
@@ -171,4 +175,35 @@ void ServerWorld::FireRocket(EntityID sourceEntity, sf::Vector2f position, float
     RocketEntity* rocket = new RocketEntity(GetNewEntityID(), position, rotation, sourceEntity, tickClock.GetTick(), lifetime);
     AddEntity(rocket);
     networking.Broadcast(rocket->CreationPacket(tickClock.GetTick()));
+}
+
+bool ServerWorld::TryExplodeRocket(EntityID sourceEntity, EntityID rocketEntity, sf::Vector2f point) {
+    for(auto& [id, entity] : entities) {
+        if (id == sourceEntity) continue;
+        if (id == rocketEntity) continue;
+        if (entity->GetType() == EntityType::BULLET_HOLE) continue;
+        if (entity->GetType() == EntityType::UNKNOWN) continue;
+        if (!entity->ContainsPoint(point)) continue;
+        // Explode
+        for (auto& [id, entity] : entities) {
+            if(entity->GetType() != EntityType::PLAYER) continue;
+            // Get vector to player
+            sf::Vector2f d{ entity->getPosition() - point };
+            float length{ sqrtf(d.x * d.x + d.y * d.y) };
+            // Get damage dealt if hit
+            float power{ 1 - length / 6 };
+            int damage{ (int)(std::clamp(power, 0.0f, 1.0f) * 2000.0f) };
+            if(damage < 10) continue;// Minimum damage threshold
+            d /= length;
+            // Cast ray
+            auto result{ RayCast(rocketEntity, point + d * 0.5f, d, length, 0.1f, 0) };
+            for(auto& [hitEntity, distance] : result) {
+                if(hitEntity->GetType() == EntityType::BARRIER) break;
+                if(hitEntity->GetID() != entity->GetID()) continue;
+                DamagePlayer((ServerPlayerEntity*)hitEntity, (ServerPlayerEntity*)TryGetEntity(sourceEntity).value_or(nullptr), damage);
+            }
+        }
+        return true;
+    }
+    return false;
 }

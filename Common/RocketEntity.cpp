@@ -18,7 +18,13 @@ sf::Packet RocketEntity::CreationPacket(int tick) const {
 }
 
 void RocketEntity::Update(World* world) {
+	// Move
 	move(getDirection() * world->GetClock().GetTickDelta() * 8.0f);
+	// Explode
+	if (world->TryExplodeRocket(sourceEntity, GetID(), getPosition())) {
+		Kill();
+	}
+	// Despawn
 	if (world->GetClock().GetTick() > creationTick + despawnTime) {
 		Kill();
 	}

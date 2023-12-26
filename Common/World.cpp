@@ -4,7 +4,13 @@
 #include <format>
 #include <ranges>
 
-World::World(int startingTick) : tickClock{60, startingTick} {
+World::World(Side side, int startingTick) : 
+side{side}, 
+tickClock{60, startingTick} {
+}
+
+World::Side World::GetSide() const {
+    return side;
 }
 
 void World::AddEntity(Entity* entity) {
@@ -68,15 +74,13 @@ std::vector<World::IntersectionResult> World::GetIntersecting(Entity* source) {
 	return result;
 }
 
-const float MAX_RAYCAST_DISTANCE{20.0f};
-
-std::vector<World::RayCastResult> World::RayCast(Entity* exclude, sf::Vector2f origin, sf::Vector2f direction, int ticksPast) {
+std::vector<World::RayCastResult> World::RayCast(EntityID exclude, sf::Vector2f origin, sf::Vector2f direction, float maxDistance, float stepSize, int ticksPast) {
     std::vector<World::RayCastResult> result;
     EntityID alreadyHit{0};
-    for(float distance = 0.0f; distance < MAX_RAYCAST_DISTANCE; distance += 0.25f){
+    for(float distance = 0.0f; distance < maxDistance; distance += 0.25f){
         sf::Vector2f point{origin + direction * distance};
         for(auto& [id, entity] : entities) {
-            if(entity.get() == exclude) continue;
+            if(id == exclude) continue;
             if(id == alreadyHit) continue;
             if(entity->ContainsPoint(point, ticksPast)) {
                 result.push_back({entity.get(), distance});

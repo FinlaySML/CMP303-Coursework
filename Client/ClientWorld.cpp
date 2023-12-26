@@ -13,7 +13,7 @@
 #include <iostream>
 #include <cassert>
 
-ClientWorld::ClientWorld(std::unique_ptr<ClientNetworking>&& server) : World(server->GetServerTick()),
+ClientWorld::ClientWorld(std::unique_ptr<ClientNetworking>&& server) : World(World::Side::CLIENT, server->GetServerTick()),
 server { std::move(server) },
 respawnTime{0.0f},
 inputIndex{0},
@@ -135,7 +135,9 @@ void ClientWorld::Render(sf::RenderWindow& window) {
     drawString(std::format("RTT {} ticks", server->rtt), {0, 0});
     if (auto playerOpt = TryGetEntity(localPlayer.value_or(0), EntityType::PLAYER)) {
         ClientPlayerEntity* player{ (ClientPlayerEntity*)playerOpt.value() };
-        drawString(std::format("HP {}", player->GetHealth()), {0, 24});
+        drawString(std::format("HEALTH {}", player->GetHealth()), {0, 24});
+        drawString(std::format("GUN {:.0f}%", 100 - player->GetGunCooldown() * 100), { 0, 48 });
+        drawString(std::format("ROCKET {:.0f}%", 100 - player->GetRocketCooldown() * 100), {0, 72});
     }else if (respawnTime > 0) {
         drawString(std::format("RESPAWN {:.1f}", respawnTime), {0, 24});
     }
@@ -150,6 +152,10 @@ void ClientWorld::GunEffects(EntityID sourceEntity, EntityID hitEntity, sf::Vect
 }
 
 void ClientWorld::FireRocket(EntityID sourceEntity, sf::Vector2f position, float rotation, int lifetime) {
+}
+
+bool ClientWorld::TryExplodeRocket(EntityID sourceEntity, EntityID rocketEntity, sf::Vector2f point) {
+    return false;
 }
 
 PlayerEntity::InputData ClientWorld::GetInputData(sf::RenderWindow& window) {

@@ -62,6 +62,7 @@ void ClientPlayerEntity::SetPlayerState(PacketFactory::PlayerStateData state) {
 	setPosition(state.position);
 	setRotation(state.rotation);
 	gunCooldown = state.gunCooldown;
+	rocketCooldown = state.rocketCooldown;
 }
 
 std::mt19937 randGen;
