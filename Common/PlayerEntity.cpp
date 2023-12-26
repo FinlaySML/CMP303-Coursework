@@ -3,6 +3,9 @@
 #include <array>
 #include <ranges>
 
+const int MAX_GUN_COOLDOWN{10};
+const int MAX_ROCKET_COOLDOWN{600};
+
 PlayerEntity::PlayerEntity(EntityID id, sf::Vector2f position, float rotation) : 
 Entity(EntityType::PLAYER, id), 
 health{1000}, 
@@ -51,7 +54,7 @@ void PlayerEntity::UpdateFromInput(World* world, InputData inputData, bool real,
     if (gunCooldown > 0) {
         gunCooldown--;
     } else if (inputData.leftMouse) {
-        gunCooldown = 10;
+        gunCooldown = MAX_GUN_COOLDOWN;
         if(real) {
             auto result = world->RayCast(this, getPosition(), getDirection(), ticksPast);
             if (result.size() > 0) {
@@ -60,10 +63,26 @@ void PlayerEntity::UpdateFromInput(World* world, InputData inputData, bool real,
             }
         }
     }
+    if(rocketCooldown > 0) {
+        rocketCooldown--;
+    } else if (inputData.rightMouse) {
+        rocketCooldown = MAX_ROCKET_COOLDOWN;
+        if (real) {
+            world->FireRocket(GetID(), getPosition(), getRotation(), 120);
+        }
+    }
 }
 
 int PlayerEntity::GetHealth() const {
     return health;
+}
+
+float PlayerEntity::GetGunCooldown() const {
+    return gunCooldown / (float) MAX_GUN_COOLDOWN;
+}
+
+float PlayerEntity::GetRocketCooldown() const {
+    return rocketCooldown / (float)MAX_ROCKET_COOLDOWN;
 }
 
 EntityID PlayerEntity::GetCauseOfDeath() const {

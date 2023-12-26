@@ -5,6 +5,7 @@
 #include <format>
 #include "BarrierEntity.h"
 #include "BulletHoleEntity.h"
+#include "RocketEntity.h"
 #include <cassert>
 
 const float CLIENT_UPDATE_FREQUENCY{10.0f};
@@ -164,4 +165,10 @@ void ServerWorld::GunEffects(EntityID sourceEntity, EntityID hitEntity, sf::Vect
             sourcePlayer->client->IncrementStat(Stats::Type::MISSES);
         }
     }
+}
+
+void ServerWorld::FireRocket(EntityID sourceEntity, sf::Vector2f position, float rotation, int lifetime) {
+    RocketEntity* rocket = new RocketEntity(GetNewEntityID(), position, rotation, sourceEntity, tickClock.GetTick(), lifetime);
+    AddEntity(rocket);
+    networking.Broadcast(rocket->CreationPacket(tickClock.GetTick()));
 }

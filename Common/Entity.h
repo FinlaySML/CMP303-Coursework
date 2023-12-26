@@ -12,7 +12,8 @@ enum class EntityType : EntityTypeUnderlying {
 	UNKNOWN,
 	PLAYER,
 	BARRIER,
-	BULLET_HOLE
+	BULLET_HOLE,
+	ROCKET
 };
 
 class Entity : public sf::Transformable {

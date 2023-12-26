@@ -13,6 +13,7 @@ public:
     void DamagePlayer(ServerPlayerEntity* target, ServerPlayerEntity* source, int amount);
     void SpawnPlayer(ConnectedClient* client);
     void GunEffects(EntityID sourceEntity, EntityID hitEntity, sf::Vector2f hitPosition) override;
+    void FireRocket(EntityID sourceEntity, sf::Vector2f position, float rotation, int lifetime) override;
 private:
     void Tick();
     ServerNetworking networking;

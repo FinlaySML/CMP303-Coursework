@@ -2,6 +2,7 @@
 #include "ClientPlayerEntity.h"
 #include "ClientBarrierEntity.h"
 #include "ClientBulletHoleEntity.h"
+#include "ClientRocketEntity.h"
 #include "ResourceManager.h"
 #include <SFML/Graphics/Text.hpp>
 #include <SFML/Graphics/Sprite.hpp>
@@ -148,6 +149,9 @@ void ClientWorld::GunEffects(EntityID sourceEntity, EntityID hitEntity, sf::Vect
     ResourceManager::GetInstance().minigunSound.play();
 }
 
+void ClientWorld::FireRocket(EntityID sourceEntity, sf::Vector2f position, float rotation, int lifetime) {
+}
+
 PlayerEntity::InputData ClientWorld::GetInputData(sf::RenderWindow& window) {
     inputIndex++;
     PlayerEntity::InputData inputData{};
@@ -190,6 +194,14 @@ Entity* ClientWorld::CreateFromPacket(sf::Packet& packet) {
         packet >> creationTick >> despawnTick;
         packet >> color.r >> color.g >> color.b >> color.a;
         return new ClientBulletHoleEntity(id, position, rotation, creationTick, despawnTick, color);
+    }
+    if (type == EntityType::ROCKET) {
+        EntityID sourceEntity;
+        int creationTick, despawnTick;
+        packet >> sourceEntity;
+        packet >> creationTick;
+        packet >> despawnTick;
+        return new ClientRocketEntity(id, position, rotation, sourceEntity, creationTick, despawnTick);
     }
     return nullptr;
 }

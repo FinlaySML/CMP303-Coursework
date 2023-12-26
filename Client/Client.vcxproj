@@ -139,6 +139,7 @@
     <ClCompile Include="ClientBulletHoleEntity.cpp" />
     <ClCompile Include="ClientNetworking.cpp" />
     <ClCompile Include="ClientPlayerEntity.cpp" />
+    <ClCompile Include="ClientRocketEntity.cpp" />
     <ClCompile Include="ClientState.cpp" />
     <ClCompile Include="ClientWorld.cpp" />
     <ClCompile Include="ConnectToServer.cpp" />
@@ -150,6 +151,7 @@
     <ClInclude Include="ClientBulletHoleEntity.h" />
     <ClInclude Include="ClientNetworking.h" />
     <ClInclude Include="ClientPlayerEntity.h" />
+    <ClInclude Include="ClientRocketEntity.h" />
     <ClInclude Include="ClientState.h" />
     <ClInclude Include="ClientWorld.h" />
     <ClInclude Include="ConnectToServer.h" />

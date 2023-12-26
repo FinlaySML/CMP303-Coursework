@@ -17,9 +17,12 @@ public:
 	std::optional<sf::FloatRect> GetCollisionBox() const override;
 	bool ContainsPoint(sf::Vector2f point, int ticksPast = 0) const override;
 	int GetHealth() const;
+	float GetGunCooldown() const;
+	float GetRocketCooldown() const;
 	EntityID GetCauseOfDeath() const;
 protected:
 	int gunCooldown;
+	int rocketCooldown;
 	int health;
 	EntityID causeOfDeath;
 };

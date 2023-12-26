@@ -14,6 +14,7 @@ public:
     void Update(sf::RenderWindow& window);
     void Render(sf::RenderWindow& window);
     void GunEffects(EntityID sourceEntity, EntityID hitEntity, sf::Vector2f hitPosition) override;
+    void FireRocket(EntityID sourceEntity, sf::Vector2f position, float rotation, int lifetime) override;
     PlayerEntity::InputData GetInputData(sf::RenderWindow& window);
     static Entity* CreateFromPacket(sf::Packet& packet);
     bool Disconnected() const;
