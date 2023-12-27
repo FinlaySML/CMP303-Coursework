@@ -10,22 +10,44 @@
 
 const float CLIENT_UPDATE_FREQUENCY{10.0f};
 
-ServerWorld::ServerWorld(unsigned short port) : World(World::Side::SERVER), usedEntityIds{0}, networking{port} {
-    for (int i = 0; i < 16; i++) {
-        AddEntity(new BarrierEntity(GetNewEntityID(), sf::Vector2f(i - 8, -6)));
-        AddEntity(new BarrierEntity(GetNewEntityID(), sf::Vector2f(i - 8, 5)));
-    }
-    for (int i = 0; i < 10; i++) {
-        AddEntity(new BarrierEntity(GetNewEntityID(), sf::Vector2f(-8, i - 5)));
-        AddEntity(new BarrierEntity(GetNewEntityID(), sf::Vector2f(7, i - 5)));
-    }
-    for (int i = 0; i < 6; i++) {
-        AddEntity(new BarrierEntity(GetNewEntityID(), sf::Vector2f(-5, i - 3)));
-        AddEntity(new BarrierEntity(GetNewEntityID(), sf::Vector2f(4, i - 3)));
-    }
-    for (int i = 0; i < 6; i++) {
-        AddEntity(new BarrierEntity(GetNewEntityID(), sf::Vector2f(-i + 1, 2)));
-        AddEntity(new BarrierEntity(GetNewEntityID(), sf::Vector2f(i - 2, -3)));
+ServerWorld::ServerWorld(unsigned short port) : 
+World(World::Side::SERVER), 
+usedEntityIds{0}, 
+networking{port},
+clientUpdateAccumulator{0.0f} {
+    //32 wide x 24 tall
+    const std::string mapData{
+    "################################"
+    "#                              #"
+    "#                              #"
+    "#  #########    ##########  #  #"
+    "#  #       #          #     #  #"
+    "#  #       #          #     #  #"
+    "#  ###  #  ######  #  #  ####  #"
+    "#    #  #          #  #     #  #"
+    "#    #  #          #  #     #  #"
+    "#  ###  ############  ####  #  #"
+    "#  #                  #     #  #"
+    "#  #                  #     #  #"
+    "#  #####  ########  ###  ####  #"
+    "#                              #"
+    "#                              #"
+    "#     ######        #########  #"
+    "#     #    #        #       #  #"
+    "#     #             #       #  #"
+    "#     ######           ###  #  #"
+    "#     #             #       #  #"
+    "#     #    #        #       #  #"
+    "#     ######        #########  #"
+    "#                              #"
+    "################################"
+    };
+    for(int y{0}; y < 24; y++) {
+        for (int x{0}; x < 32; x++) {
+            if(mapData[y*32+x] == '#') {
+                AddEntity(new BarrierEntity(GetNewEntityID(), sf::Vector2f(x - 16, y - 12)));
+            }
+        }
     }
 }
 

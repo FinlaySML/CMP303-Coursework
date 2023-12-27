@@ -17,13 +17,17 @@ ClientWorld::ClientWorld(std::unique_ptr<ClientNetworking>&& server) : World(Wor
 server { std::move(server) },
 respawnTime{0.0f},
 inputIndex{0},
-tickOffset{ 0.1f } {
+tickOffset{ 0.1f },
+cameraPos{0, 0} {
     tickOffset.AddValue(0);
 }
 
 void ClientWorld::Update(sf::RenderWindow& window) {
     //World View (for getting the world position of the mouse in update)
-    window.setView(sf::View{ sf::Vector2f{0, 0}, sf::Vector2f{16, 12} });
+    if (auto * player{ GetLocalPlayerEntity() }) {
+        cameraPos = player->getPosition();
+    }
+    window.setView(sf::View{ cameraPos, sf::Vector2f{16, 12} });
     //Tick
     tickClock.ExecuteTick([&]() {
         respawnTime -= tickClock.GetTickDelta();
@@ -121,7 +125,10 @@ void ClientWorld::Update(sf::RenderWindow& window) {
 
 void ClientWorld::Render(sf::RenderWindow& window) {
     //Render
-    window.setView(sf::View{ sf::Vector2f{0, 0}, sf::Vector2f{16, 12} });
+    if (auto * player{ GetLocalPlayerEntity() }) {
+        cameraPos = player->getPosition();
+    }
+    window.setView(sf::View{ cameraPos, sf::Vector2f{16, 12} });
     for (auto& [id, entity] : entities) {
         entity->Draw(window, tickClock.GetTick());
     }

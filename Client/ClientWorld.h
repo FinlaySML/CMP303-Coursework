@@ -29,5 +29,6 @@ private:
     std::unique_ptr<ClientNetworking> server;
     std::optional<EntityID> localPlayer;
     float respawnTime;
+    sf::Vector2f cameraPos;
 };
 
