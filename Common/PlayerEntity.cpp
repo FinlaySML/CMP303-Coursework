@@ -57,7 +57,7 @@ void PlayerEntity::UpdateFromInput(World* world, InputData inputData, bool real,
     } else if (inputData.leftMouse) {
         gunCooldown = MAX_GUN_COOLDOWN;
         if(real) {
-            auto result = world->RayCast(GetID(), getPosition(), getDirection(), 20.0f, 0.25f, ticksPast);
+            auto result = world->RayCast(GetID(), getPosition(), getDirection(), 10.0f, 0.25f, ticksPast);
             if (result.size() > 0) {
                 auto type{ result[0].entity->GetType() };
                 world->GunEffects(GetID(), result[0].entity->GetID(), getPosition() + getDirection() * result[0].distance);
