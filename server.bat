@@ -1,1 +1,1 @@
-START /D .\Server .\x64\Debug\Server.exe
+START /D .\Server .\x64\Release\Server.exe

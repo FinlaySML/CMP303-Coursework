@@ -1,1 +1,1 @@
-START /D .\Client .\x64\Debug\Client.exe
+START /D .\Client .\x64\Release\Client.exe

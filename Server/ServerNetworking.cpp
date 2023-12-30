@@ -69,10 +69,14 @@ void ServerNetworking::Broadcast(sf::Packet packet, ClientID excluding) {
 }
 
 void ServerNetworking::BroadcastUnreliable(sf::Packet packet, ClientID excluding) {
+#ifdef ALWAYS_RELIABLE
+    Broadcast(packet, excluding);
+#else
     for (auto& [id, client] : clients) {
         if (excluding == client->id) continue;
         client->SendUnreliable(packet);
     }
+#endif
 }
 
 void ServerNetworking::Broadcast(const std::string& message) {

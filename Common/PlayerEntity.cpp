@@ -61,6 +61,8 @@ void PlayerEntity::UpdateFromInput(World* world, InputData inputData, bool real,
             if (result.size() > 0) {
                 auto type{ result[0].entity->GetType() };
                 world->GunEffects(GetID(), result[0].entity->GetID(), getPosition() + getDirection() * result[0].distance);
+            }else{
+                world->GunEffects(GetID(), 0, getPosition() + getDirection() * 10.0f);
             }
         }
     }

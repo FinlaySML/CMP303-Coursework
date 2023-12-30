@@ -18,7 +18,8 @@ server { std::move(server) },
 respawnTime{0.0f},
 inputIndex{0},
 tickOffset{ 0.1f },
-cameraPos{0, 0} {
+cameraPos{0, 0},
+confirmedPlayerStateIndex{ 0 } {
     tickOffset.AddValue(0);
 }
 
@@ -35,6 +36,7 @@ void ClientWorld::Update(sf::RenderWindow& window) {
             respawnTime = 0.0f;
         }
         //Receive Packets
+        std::optional<PacketFactory::PlayerStateData> confirmedPlayerState;
         server->ProcessPackets([&](sf::Packet& packet) {
             PacketType type{ PacketFactory::GetType(packet) };
             if(type == PacketType::STAT_UPDATE) {
@@ -91,23 +93,27 @@ void ClientWorld::Update(sf::RenderWindow& window) {
                 server->rtt = PacketFactory::TellRTT(packet);
             }
             if(type == PacketType::PLAYER_STATE) {
-                if (auto* player{ GetLocalPlayerEntity() }) {
-                    PacketFactory::PlayerStateData state{PacketFactory::PlayerState(packet)};
-                    if(state.index > 0) {
-                        //Remove unneeded old inputs
-                        //TODO: given that inputBuffer stores in order of index, this could be more efficient
-                        std::erase_if(inputBuffer, [=](const PlayerEntity::InputData& data) {
-                            return data.index <= state.index;
-                         });
-                        //Rollback and recompute
-                        player->SetPlayerState(state);
-                        for(PlayerEntity::InputData& data : inputBuffer) {
-                            player->UpdateFromInput(this, data, false);
-                        }
-                    }
+                PacketFactory::PlayerStateData state{PacketFactory::PlayerState(packet)};
+                if(state.index > confirmedPlayerStateIndex) {
+                    confirmedPlayerStateIndex = state.index;
+                    confirmedPlayerState = state;
                 }
             }
         });
+        if(auto* player{GetLocalPlayerEntity() }) {
+            if (confirmedPlayerState) {
+                //Remove unneeded old inputs
+                //TODO: given that inputBuffer stores in order of index, this could be more efficient
+                std::erase_if(inputBuffer, [=](const PlayerEntity::InputData& data) {
+                    return data.index <= confirmedPlayerStateIndex;
+                });
+                //Rollback and recompute
+                player->SetPlayerState(*confirmedPlayerState);
+                for (PlayerEntity::InputData& data : inputBuffer) {
+                    player->UpdateFromInput(this, data, false);
+                }
+            }
+        }
         //Local Player Update
         if(auto* player{GetLocalPlayerEntity()}) {
             //Get input
@@ -120,6 +126,10 @@ void ClientWorld::Update(sf::RenderWindow& window) {
             entity->Update(this);
         }
         CleanEntities();
+        // Check TCP connection
+        if (tickClock.GetTick() % CHECK_CONNECTION_INTERVAL == 0) {
+            server->Send(PacketFactory::None());
+        }
     });
 }
 

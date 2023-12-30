@@ -25,7 +25,11 @@ void ConnectedClient::Send(sf::Packet packet) {
 }
 
 void ConnectedClient::SendUnreliable(sf::Packet packet) {
+#ifdef ALWAYS_RELIABLE
+	Send(packet);
+#else
 	udp->send(packet, tcp.getRemoteAddress(), tcp.getRemotePort());
+#endif
 }
 
 ConnectedClient::Status ConnectedClient::GetStatus() const {

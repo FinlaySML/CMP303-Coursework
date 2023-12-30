@@ -6,7 +6,7 @@
 #include <SFML/Graphics/Texture.hpp>
 #include <SFML/Audio.hpp>
 #include "ClientNetworking.h"
-#include "MovingAverage.h";
+#include "MovingAverage.h"
 
 class ClientWorld : public World {
 public:
@@ -30,5 +30,6 @@ private:
     std::optional<EntityID> localPlayer;
     float respawnTime;
     sf::Vector2f cameraPos;
+    int confirmedPlayerStateIndex;
 };
 

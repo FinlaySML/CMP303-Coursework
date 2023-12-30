@@ -15,12 +15,11 @@ bool ClientNetworking::Init() {
 			if (pending.wait_for(std::chrono::seconds(0)) != std::future_status::ready) {
 				return false;
 			}
-			if (pending.get() == sf::Socket::Done) {
+			if(pending.get() == sf::Socket::Done && udp.bind(tcp.getLocalPort()) == sf::Socket::Done) {
 				status = Status::PENDING_SET_TICK;
-				udp.bind(tcp.getLocalPort());
 				pending = std::async(std::launch::async, [&] { return tcp.receive(firstPacket); });
 				return false;
-			} else {
+			}else{
 				status = Status::DISCONNECTED;
 			}
 			break;
@@ -65,7 +64,11 @@ void ClientNetworking::Send(sf::Packet packet) {
 }
 
 void ClientNetworking::SendUnreliable(sf::Packet packet) {
+#ifdef ALWAYS_RELIABLE
+	Send(packet);
+#else
 	udp.send(packet, tcp.getRemoteAddress(), tcp.getRemotePort());
+#endif
 }
 
 ClientNetworking::Status ClientNetworking::GetStatus() const {
